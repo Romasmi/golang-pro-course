@@ -1,3 +1,3 @@
-module github.com/fixme_my_friend/hw01_hello_otus
+module github.com/Romasmi/golang-pro-course
 
 go 1.23
