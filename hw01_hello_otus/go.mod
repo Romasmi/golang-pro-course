@@ -1,4 +1,4 @@
-module github.com/Romasmi/golang-pro-course
+module github.com/Romasmi/golang-pro-course/hw01_hello_otus
 
 go 1.23
 
