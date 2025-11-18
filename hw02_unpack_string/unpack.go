@@ -10,36 +10,36 @@ import (
 
 var ErrInvalidString = errors.New("invalid string")
 
+const slash = '\\'
+
 func Unpack(packed string) (string, error) {
 	var unpacked strings.Builder
 	var prevR rune
 	isPrevEscaped := false
 	for _, r := range packed {
 		if unicode.IsDigit(r) {
-			if !isPrevEscaped {
-				if prevR == '\\' {
-					prevR = r
-					isPrevEscaped = true
-					continue
-				}
-				if unicode.IsDigit(prevR) {
-					return "", fmt.Errorf("%w: numbers are not accepted", ErrInvalidString)
-				}
+			if !isPrevEscaped && prevR == slash {
+				prevR = r
+				isPrevEscaped = true
+				continue
 			}
+
+			if !isPrevEscaped && unicode.IsDigit(prevR) {
+				return "", fmt.Errorf("%w: numbers are not accepted", ErrInvalidString)
+			}
+
 			if prevR == 0 {
 				return "", fmt.Errorf("%w: digit can not be before a substring", ErrInvalidString)
 			}
-
 			digit, _ := strconv.Atoi(string(r))
 			unpacked.WriteString(strings.Repeat(string(prevR), digit))
 			prevR = 0
+		} else if prevR == slash && !isPrevEscaped {
+			prevR = r
+			isPrevEscaped = true
+			continue
 		} else {
 			if prevR != 0 {
-				if prevR == '\\' && !isPrevEscaped {
-					prevR = r
-					isPrevEscaped = true
-					continue
-				}
 				unpacked.WriteRune(prevR)
 			}
 			prevR = r
