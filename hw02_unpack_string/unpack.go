@@ -23,7 +23,7 @@ func Unpack(packed string) (string, error) {
 				return "", fmt.Errorf("%w: digit can not be before a substring", ErrInvalidString)
 			}
 			digit, _ := strconv.Atoi(string(v))
-			unpacked.WriteString(unpackSubstring(lastRune, digit))
+			unpacked.WriteString(strings.Repeat(string(lastRune), digit))
 			lastRune = 0
 		} else {
 			if lastRune != 0 {
@@ -36,12 +36,4 @@ func Unpack(packed string) (string, error) {
 		unpacked.WriteRune(lastRune)
 	}
 	return unpacked.String(), nil
-}
-
-func unpackSubstring(symbol rune, count int) string {
-	var output strings.Builder
-	for i := 0; i < count; i++ {
-		output.WriteRune(symbol)
-	}
-	return output.String()
 }
