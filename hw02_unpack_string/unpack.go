@@ -12,28 +12,42 @@ var ErrInvalidString = errors.New("invalid string")
 
 func Unpack(packed string) (string, error) {
 	var unpacked strings.Builder
-	var lastRune rune
-	for _, v := range packed {
-		if unicode.IsDigit(v) {
-			if unicode.IsDigit(lastRune) {
-				return "", fmt.Errorf("%w: number are not accepted", ErrInvalidString)
+	var prevR rune
+	isPrevEscaped := false
+	for _, r := range packed {
+		if unicode.IsDigit(r) {
+			if !isPrevEscaped {
+				if prevR == '\\' {
+					prevR = r
+					isPrevEscaped = true
+					continue
+				}
+				if unicode.IsDigit(prevR) {
+					return "", fmt.Errorf("%w: numbers are not accepted", ErrInvalidString)
+				}
 			}
-
-			if lastRune == 0 {
+			if prevR == 0 {
 				return "", fmt.Errorf("%w: digit can not be before a substring", ErrInvalidString)
 			}
-			digit, _ := strconv.Atoi(string(v))
-			unpacked.WriteString(strings.Repeat(string(lastRune), digit))
-			lastRune = 0
+
+			digit, _ := strconv.Atoi(string(r))
+			unpacked.WriteString(strings.Repeat(string(prevR), digit))
+			prevR = 0
 		} else {
-			if lastRune != 0 {
-				unpacked.WriteRune(lastRune)
+			if prevR != 0 {
+				if prevR == '\\' && !isPrevEscaped {
+					prevR = r
+					isPrevEscaped = true
+					continue
+				}
+				unpacked.WriteRune(prevR)
 			}
-			lastRune = v
+			prevR = r
 		}
+		isPrevEscaped = false
 	}
-	if lastRune != 0 {
-		unpacked.WriteRune(lastRune)
+	if prevR != 0 {
+		unpacked.WriteRune(prevR)
 	}
 	return unpacked.String(), nil
 }
