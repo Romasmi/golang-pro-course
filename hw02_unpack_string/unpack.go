@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	ErrNumbersAreNotAllowed         = errors.New("numbers > 9 not allowed")
-	ErrStringCanNotStartWithANumber = errors.New("string can not start with a number")
-	ErrInvalidEscaping              = errors.New("invalid escaping")
+	ErrNumbersAreNotAllowed        = errors.New("numbers > 9 not allowed")
+	ErrStringCanNotStartWithADigit = errors.New("string can not start with a digit")
+	ErrInvalidEscaping             = errors.New("invalid escaping")
 )
 
 func Unpack(packed string) (string, error) {
@@ -19,7 +19,7 @@ func Unpack(packed string) (string, error) {
 		return packed, nil
 	}
 	if unicode.IsDigit(rune(packed[0])) {
-		return "", ErrStringCanNotStartWithANumber
+		return "", ErrStringCanNotStartWithADigit
 	}
 
 	var unpacked strings.Builder

@@ -34,24 +34,28 @@ func TestUnpack(t *testing.T) {
 	}
 }
 
-func TestUnpackInvalidString(t *testing.T) {
+func TestUnpackInvalidStringStartingWithDigit(t *testing.T) {
 	invalidStrings := []string{"3abc", "45"}
 	for _, tc := range invalidStrings {
 		t.Run(tc, func(t *testing.T) {
 			_, err := Unpack(tc)
-			require.Truef(t, errors.Is(err, ErrStringCanNotStartWithANumber), "actual error %q", err)
+			require.Truef(t, errors.Is(err, ErrStringCanNotStartWithADigit), "actual error %q", err)
 		})
 	}
+}
 
-	invalidStrings = []string{"aaa10b", "a45334"}
+func TestUnpackInvalidStringWithNumbers(t *testing.T) {
+	invalidStrings := []string{"aaa10b", "a45334"}
 	for _, tc := range invalidStrings {
 		t.Run(tc, func(t *testing.T) {
 			_, err := Unpack(tc)
 			require.Truef(t, errors.Is(err, ErrNumbersAreNotAllowed), "actual error %q", err)
 		})
 	}
+}
 
-	invalidStrings = []string{`a\\\b`, `\\\`, `a\`, `\`}
+func TestUnpackInvalidStringWithWrongEscaping(t *testing.T) {
+	invalidStrings := []string{`a\\\b`, `\\\`, `a\`, `\`}
 	for _, tc := range invalidStrings {
 		t.Run(tc, func(t *testing.T) {
 			_, err := Unpack(tc)
