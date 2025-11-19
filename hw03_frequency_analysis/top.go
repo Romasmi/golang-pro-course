@@ -24,7 +24,7 @@ func Top10(text string) []string {
 	for i := len(counts) - 1; i >= 0 && i > len(counts)-topN; i-- {
 		toTake := min(left, len(topWordsCount[counts[i]]))
 		top = append(top, topWordsCount[counts[i]][0:toTake]...)
-		left = left - toTake
+		left -= toTake
 	}
 
 	return top
@@ -51,7 +51,7 @@ func getTopWordsCount(wordsCount map[string]int) topWordsCountType {
 	for key, value := range wordsCount {
 		topWordsCount[value] = append(topWordsCount[value], key)
 	}
-	for key, _ := range topWordsCount {
+	for key := range topWordsCount {
 		sort.Strings(topWordsCount[key])
 	}
 	return topWordsCount
