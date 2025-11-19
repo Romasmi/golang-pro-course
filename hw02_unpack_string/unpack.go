@@ -18,7 +18,8 @@ func Unpack(packed string) (string, error) {
 	if packed == "" {
 		return packed, nil
 	}
-	if unicode.IsDigit(rune(packed[0])) {
+	runes := []rune(packed)
+	if unicode.IsDigit(runes[0]) {
 		return "", ErrStringCanNotStartWithADigit
 	}
 
@@ -26,7 +27,7 @@ func Unpack(packed string) (string, error) {
 	var prevR rune
 	isPrevEscaped := false
 	lastPosition := utf8.RuneCountInString(packed) - 1
-	for i, r := range packed {
+	for i, r := range runes {
 		switch {
 		case unicode.IsDigit(r):
 			if !isPrevEscaped && prevR == 0 {
