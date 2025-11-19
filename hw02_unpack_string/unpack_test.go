@@ -55,7 +55,7 @@ func TestUnpackInvalidStringWithNumbers(t *testing.T) {
 }
 
 func TestUnpackInvalidStringWithWrongEscaping(t *testing.T) {
-	invalidStrings := []string{`a\\\b`, `\\\`, `a\`, `\`}
+	invalidStrings := []string{`a\\\b`, `\\\`, `a\`, `\`, `ф\`}
 	for _, tc := range invalidStrings {
 		t.Run(tc, func(t *testing.T) {
 			_, err := Unpack(tc)

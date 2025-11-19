@@ -25,9 +25,11 @@ func Unpack(packed string) (string, error) {
 
 	var unpacked strings.Builder
 	var prevR rune
+	var position int
 	isPrevEscaped := false
-	lastPosition := utf8.RuneCountInString(packed) - 1
-	for i, r := range packed {
+	lastPosition := utf8.RuneCountInString(packed)
+	for _, r := range packed {
+		position++
 		switch {
 		case unicode.IsDigit(r):
 			if !isPrevEscaped && prevR == 0 {
@@ -48,7 +50,7 @@ func Unpack(packed string) (string, error) {
 				prevR = r
 				isPrevEscaped = true
 				continue
-			} else if i == lastPosition {
+			} else if position == lastPosition {
 				return "", ErrInvalidEscaping
 			}
 
