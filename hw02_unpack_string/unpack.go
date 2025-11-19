@@ -17,7 +17,8 @@ func Unpack(packed string) (string, error) {
 	var prevR rune
 	isPrevEscaped := false
 	for _, r := range packed {
-		if unicode.IsDigit(r) {
+		switch {
+		case unicode.IsDigit(r):
 			if !isPrevEscaped && prevR == slash {
 				prevR = r
 				isPrevEscaped = true
@@ -27,18 +28,18 @@ func Unpack(packed string) (string, error) {
 			if !isPrevEscaped && unicode.IsDigit(prevR) {
 				return "", fmt.Errorf("%w: numbers are not accepted", ErrInvalidString)
 			}
-
 			if prevR == 0 {
 				return "", fmt.Errorf("%w: digit can not be before a substring", ErrInvalidString)
 			}
+
 			digit, _ := strconv.Atoi(string(r))
 			unpacked.WriteString(strings.Repeat(string(prevR), digit))
 			prevR = 0
-		} else if prevR == slash && !isPrevEscaped {
+		case prevR == slash && !isPrevEscaped:
 			prevR = r
 			isPrevEscaped = true
 			continue
-		} else {
+		default:
 			if prevR != 0 {
 				unpacked.WriteRune(prevR)
 			}
