@@ -27,7 +27,7 @@ func Unpack(packed string) (string, error) {
 	var prevR rune
 	var position int
 	isPrevEscaped := false
-	lastPosition := utf8.RuneCountInString(packed)
+	runesCount := utf8.RuneCountInString(packed)
 	for _, r := range packed {
 		position++
 		switch {
@@ -50,7 +50,8 @@ func Unpack(packed string) (string, error) {
 				prevR = r
 				isPrevEscaped = true
 				continue
-			} else if position == lastPosition {
+			}
+			if position == runesCount {
 				return "", ErrInvalidEscaping
 			}
 
