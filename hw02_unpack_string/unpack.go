@@ -2,7 +2,6 @@ package hw02unpackstring
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -10,7 +9,6 @@ import (
 )
 
 var (
-	ErrInvalidString                = errors.New("invalid string")
 	ErrNumbersAreNotAllowed         = errors.New("numbers > 9 not allowed")
 	ErrStringCanNotStartWithANumber = errors.New("string can not start with a number")
 	ErrInvalidEscaping              = errors.New("invalid escaping")
@@ -21,7 +19,7 @@ func Unpack(packed string) (string, error) {
 		return packed, nil
 	}
 	if unicode.IsDigit(rune(packed[0])) {
-		return "", fmt.Errorf("%w: %w", ErrInvalidString, ErrStringCanNotStartWithANumber)
+		return "", ErrStringCanNotStartWithANumber
 	}
 
 	var unpacked strings.Builder
@@ -32,7 +30,7 @@ func Unpack(packed string) (string, error) {
 		switch {
 		case unicode.IsDigit(r):
 			if !isPrevEscaped && prevR == 0 {
-				return "", fmt.Errorf("%w: %w", ErrInvalidString, ErrNumbersAreNotAllowed)
+				return "", ErrNumbersAreNotAllowed
 			}
 
 			if !isPrevEscaped && prevR == '\\' {
@@ -49,15 +47,15 @@ func Unpack(packed string) (string, error) {
 				prevR = r
 				isPrevEscaped = true
 				continue
-			} else if prevR == '\\' && i == lastPosition {
-				return "", fmt.Errorf("%w: %w", ErrInvalidString, ErrInvalidEscaping)
+			} else if i == lastPosition {
+				return "", ErrInvalidEscaping
 			}
 
 			unpacked.WriteRune(prevR)
 			prevR = r
 		default:
 			if !isPrevEscaped && prevR == '\\' {
-				return "", fmt.Errorf("%w: %w", ErrInvalidString, ErrInvalidEscaping)
+				return "", ErrInvalidEscaping
 			}
 
 			if prevR != 0 {

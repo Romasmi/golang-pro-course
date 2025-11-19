@@ -35,11 +35,27 @@ func TestUnpack(t *testing.T) {
 }
 
 func TestUnpackInvalidString(t *testing.T) {
-	invalidStrings := []string{"3abc", "45", "aaa10b", "a45334", `a\\\b`, `\\\`}
+	invalidStrings := []string{"3abc", "45"}
 	for _, tc := range invalidStrings {
 		t.Run(tc, func(t *testing.T) {
 			_, err := Unpack(tc)
-			require.Truef(t, errors.Is(err, ErrInvalidString), "actual error %q", err)
+			require.Truef(t, errors.Is(err, ErrStringCanNotStartWithANumber), "actual error %q", err)
+		})
+	}
+
+	invalidStrings = []string{"aaa10b", "a45334"}
+	for _, tc := range invalidStrings {
+		t.Run(tc, func(t *testing.T) {
+			_, err := Unpack(tc)
+			require.Truef(t, errors.Is(err, ErrNumbersAreNotAllowed), "actual error %q", err)
+		})
+	}
+
+	invalidStrings = []string{`a\\\b`, `\\\`, `a\`, `\`}
+	for _, tc := range invalidStrings {
+		t.Run(tc, func(t *testing.T) {
+			_, err := Unpack(tc)
+			require.Truef(t, errors.Is(err, ErrInvalidEscaping), "actual error %q", err)
 		})
 	}
 }
