@@ -4,6 +4,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 type topWordsCountType map[int][]string
@@ -32,14 +33,19 @@ func Top10(text string) []string {
 
 func getWordsCount(text string) map[string]int {
 	// I process text manually for the sake of memory efficiency
-	separators := []rune{' ', '\n', '\t'}
+	separators := []rune{' ', '\n', '\r', '\t'}
+	excludedString := []string{"", "-"}
 	var window strings.Builder
 	wordsCount := make(map[string]int)
 	for _, r := range text {
 		if !slices.Contains(separators, r) {
 			window.WriteRune(r)
-		} else if window.String() != "" {
-			wordsCount[window.String()]++
+		} else if !slices.Contains(excludedString, window.String()) {
+			normalizedWord := normalizeWord(window.String())
+			if normalizedWord == "" {
+				continue
+			}
+			wordsCount[normalizedWord]++
 			window.Reset()
 		}
 	}
@@ -66,4 +72,21 @@ func getCountsOfWords(topWordsCount topWordsCountType) []int {
 	}
 	sort.Ints(counts)
 	return counts
+}
+
+func normalizeWord(word string) string {
+	wordSlice := []rune(word)
+	if len(wordSlice) == 1 {
+		return strings.ToLower(word)
+	}
+
+	if !unicode.IsLetter(wordSlice[0]) && len(wordSlice) > 1 {
+		wordSlice = wordSlice[1:]
+	}
+
+	if !unicode.IsLetter(wordSlice[len(wordSlice)-1]) && len(wordSlice) > 1 {
+		wordSlice = wordSlice[:len(wordSlice)-1]
+	}
+
+	return strings.ToLower(string(wordSlice))
 }
