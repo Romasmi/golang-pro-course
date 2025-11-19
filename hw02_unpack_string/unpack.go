@@ -10,8 +10,6 @@ import (
 
 var ErrInvalidString = errors.New("invalid string")
 
-const slash = '\\'
-
 func Unpack(packed string) (string, error) {
 	var unpacked strings.Builder
 	var prevR rune
@@ -19,7 +17,7 @@ func Unpack(packed string) (string, error) {
 	for _, r := range packed {
 		switch {
 		case unicode.IsDigit(r):
-			if !isPrevEscaped && prevR == slash {
+			if !isPrevEscaped && prevR == '\\' {
 				prevR = r
 				isPrevEscaped = true
 				continue
@@ -35,7 +33,7 @@ func Unpack(packed string) (string, error) {
 			digit, _ := strconv.Atoi(string(r))
 			unpacked.WriteString(strings.Repeat(string(prevR), digit))
 			prevR = 0
-		case prevR == slash && !isPrevEscaped:
+		case prevR == '\\' && !isPrevEscaped:
 			prevR = r
 			isPrevEscaped = true
 			continue
