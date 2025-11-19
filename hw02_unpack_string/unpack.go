@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	ErrInvalidString             = errors.New("invalid string")
-	NumbersAreNotAllowed         = errors.New("numbers > 9 not allowed")
-	StringCanNotStartWithANumber = errors.New("string can not start with a number")
-	InvalidEscaping              = errors.New("invalid escaping")
+	ErrInvalidString                = errors.New("invalid string")
+	ErrNumbersAreNotAllowed         = errors.New("numbers > 9 not allowed")
+	ErrStringCanNotStartWithANumber = errors.New("string can not start with a number")
+	ErrInvalidEscaping              = errors.New("invalid escaping")
 )
 
 func Unpack(packed string) (string, error) {
@@ -21,7 +21,7 @@ func Unpack(packed string) (string, error) {
 		return packed, nil
 	}
 	if unicode.IsDigit(rune(packed[0])) {
-		return "", fmt.Errorf("%w: %w", ErrInvalidString, StringCanNotStartWithANumber)
+		return "", fmt.Errorf("%w: %w", ErrInvalidString, ErrStringCanNotStartWithANumber)
 	}
 
 	var unpacked strings.Builder
@@ -32,7 +32,7 @@ func Unpack(packed string) (string, error) {
 		switch {
 		case unicode.IsDigit(r):
 			if !isPrevEscaped && prevR == 0 {
-				return "", fmt.Errorf("%w: %w", ErrInvalidString, NumbersAreNotAllowed)
+				return "", fmt.Errorf("%w: %w", ErrInvalidString, ErrNumbersAreNotAllowed)
 			}
 
 			if !isPrevEscaped && prevR == '\\' {
@@ -50,14 +50,14 @@ func Unpack(packed string) (string, error) {
 				isPrevEscaped = true
 				continue
 			} else if prevR == '\\' && i == lastPosition {
-				return "", fmt.Errorf("%w: %w", ErrInvalidString, InvalidEscaping)
+				return "", fmt.Errorf("%w: %w", ErrInvalidString, ErrInvalidEscaping)
 			}
 
 			unpacked.WriteRune(prevR)
 			prevR = r
 		default:
 			if !isPrevEscaped && prevR == '\\' {
-				return "", fmt.Errorf("%w: %w", ErrInvalidString, InvalidEscaping)
+				return "", fmt.Errorf("%w: %w", ErrInvalidString, ErrInvalidEscaping)
 			}
 
 			if prevR != 0 {
