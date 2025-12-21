@@ -3,6 +3,7 @@ package hw03frequencyanalysis
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,10 +45,6 @@ var text = `Как видите, он  спускается  по  лестни�
 		В этот вечер...`
 
 func TestTop10(t *testing.T) {
-	t.Run("no words in empty string", func(t *testing.T) {
-		require.Len(t, Top10(""), 0)
-	})
-
 	t.Run("positive test", func(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
 			expected := []string{
@@ -79,4 +76,52 @@ func TestTop10(t *testing.T) {
 			require.Equal(t, expected, Top10(text))
 		}
 	})
+
+	cases := []struct {
+		name     string
+		input    string
+		expected []string
+	}{
+		{
+			"no words in empty string",
+			"",
+			[]string{},
+		},
+		{
+			"one word",
+			"Hello",
+			[]string{"hello"},
+		},
+		{
+			"case sensitive",
+			"Hello hello",
+			[]string{"hello"},
+		},
+		{
+			"alphabetical order",
+			"abc abc bc bc",
+			[]string{"abc", "bc"},
+		},
+		{
+			"various punctuation",
+			"Hello-world big-world - world world",
+			[]string{"world", "big-world", "hello-world"},
+		},
+		{
+			"numbers and unicode (numbers are not words)",
+			"Number123 and Номер123 это Номер123 или номер23 или 23",
+			[]string{"или", "номер123", "23", "and", "number123", "номер23", "это"},
+		},
+		{
+			"extra punctuation",
+			"Ohh my,,, my my,,,  ,,,my,,,",
+			[]string{"my", "ohh"},
+		},
+	}
+
+	for _, v := range cases {
+		t.Run(v.name, func(t *testing.T) {
+			assert.Equal(t, v.expected, Top10(v.input))
+		})
+	}
 }

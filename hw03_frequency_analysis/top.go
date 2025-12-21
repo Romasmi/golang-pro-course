@@ -20,7 +20,7 @@ func Top10(text string) []string {
 	topWordsCount := getTopWordsCount(wordsCount)
 	counts := getCountsOfWords(topWordsCount)
 
-	var top []string
+	top := []string{}
 	left := topN
 	for i := len(counts) - 1; i >= 0 && i > len(counts)-topN; i-- {
 		toTake := min(left, len(topWordsCount[counts[i]]))
@@ -49,6 +49,7 @@ func getWordsCount(text string) map[string]int {
 			window.Reset()
 		}
 	}
+	wordsCount[normalizeWord(window.String())]++
 	return wordsCount
 }
 
@@ -75,16 +76,20 @@ func getCountsOfWords(topWordsCount topWordsCountType) []int {
 }
 
 func normalizeWord(word string) string {
+	if word == "" {
+		return ""
+	}
+
 	wordSlice := []rune(word)
 	if len(wordSlice) == 1 {
 		return strings.ToLower(word)
 	}
 
-	if !unicode.IsLetter(wordSlice[0]) && len(wordSlice) > 1 {
+	for (!unicode.IsLetter(wordSlice[0]) && !unicode.IsNumber(wordSlice[0])) && len(wordSlice) > 1 {
 		wordSlice = wordSlice[1:]
 	}
 
-	if !unicode.IsLetter(wordSlice[len(wordSlice)-1]) && len(wordSlice) > 1 {
+	for (!unicode.IsLetter(wordSlice[len(wordSlice)-1]) && !unicode.IsNumber(wordSlice[len(wordSlice)-1])) && len(wordSlice) > 1 {
 		wordSlice = wordSlice[:len(wordSlice)-1]
 	}
 
