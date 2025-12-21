@@ -85,12 +85,16 @@ func normalizeWord(word string) string {
 		return strings.ToLower(word)
 	}
 
-	for (!unicode.IsLetter(wordSlice[0]) && !unicode.IsNumber(wordSlice[0])) && len(wordSlice) > 1 {
+	checkLeft := !unicode.IsLetter(wordSlice[0]) && !unicode.IsNumber(wordSlice[0])
+	for checkLeft && len(wordSlice) > 1 {
 		wordSlice = wordSlice[1:]
+		checkLeft = !unicode.IsLetter(wordSlice[0]) && !unicode.IsNumber(wordSlice[0])
 	}
 
-	for (!unicode.IsLetter(wordSlice[len(wordSlice)-1]) && !unicode.IsNumber(wordSlice[len(wordSlice)-1])) && len(wordSlice) > 1 {
+	checkRight := !unicode.IsLetter(wordSlice[len(wordSlice)-1]) && !unicode.IsNumber(wordSlice[len(wordSlice)-1])
+	for checkRight && len(wordSlice) > 1 {
 		wordSlice = wordSlice[:len(wordSlice)-1]
+		checkRight = !unicode.IsLetter(wordSlice[len(wordSlice)-1]) && !unicode.IsNumber(wordSlice[len(wordSlice)-1])
 	}
 
 	return strings.ToLower(string(wordSlice))
