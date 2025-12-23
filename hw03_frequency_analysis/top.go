@@ -4,7 +4,6 @@ import (
 	"slices"
 	"sort"
 	"strings"
-	"unicode"
 )
 
 type topWordsCountType map[int][]string
@@ -34,22 +33,24 @@ func Top10(text string) []string {
 func getWordsCount(text string) map[string]int {
 	// I process text manually for the sake of memory efficiency
 	separators := []rune{' ', '\n', '\r', '\t'}
-	excludedString := []string{"", "-"}
 	var window strings.Builder
 	wordsCount := make(map[string]int)
 	for _, r := range text {
 		if !slices.Contains(separators, r) {
 			window.WriteRune(r)
-		} else if !slices.Contains(excludedString, window.String()) {
+		} else {
 			normalizedWord := normalizeWord(window.String())
 			if normalizedWord == "" {
+				window.Reset()
 				continue
 			}
 			wordsCount[normalizedWord]++
 			window.Reset()
 		}
 	}
-	wordsCount[normalizeWord(window.String())]++
+	if word := normalizeWord(window.String()); word != "" {
+		wordsCount[normalizeWord(window.String())]++
+	}
 	return wordsCount
 }
 
@@ -76,7 +77,7 @@ func getCountsOfWords(topWordsCount topWordsCountType) []int {
 }
 
 func normalizeWord(word string) string {
-	if word == "" {
+	if word == "" || word == "-" {
 		return ""
 	}
 
@@ -85,16 +86,13 @@ func normalizeWord(word string) string {
 		return strings.ToLower(word)
 	}
 
-	checkLeft := !unicode.IsLetter(wordSlice[0]) && !unicode.IsNumber(wordSlice[0])
-	for checkLeft && len(wordSlice) > 1 {
-		wordSlice = wordSlice[1:]
-		checkLeft = !unicode.IsLetter(wordSlice[0]) && !unicode.IsNumber(wordSlice[0])
-	}
+	punctuationChars := []rune{'!', '?', ',', '.', '\''}
 
-	checkRight := !unicode.IsLetter(wordSlice[len(wordSlice)-1]) && !unicode.IsNumber(wordSlice[len(wordSlice)-1])
-	for checkRight && len(wordSlice) > 1 {
+	for slices.Contains(punctuationChars, wordSlice[0]) && len(wordSlice) > 1 {
+		wordSlice = wordSlice[1:]
+	}
+	for slices.Contains(punctuationChars, wordSlice[len(wordSlice)-1]) && len(wordSlice) > 1 {
 		wordSlice = wordSlice[:len(wordSlice)-1]
-		checkRight = !unicode.IsLetter(wordSlice[len(wordSlice)-1]) && !unicode.IsNumber(wordSlice[len(wordSlice)-1])
 	}
 
 	return strings.ToLower(string(wordSlice))

@@ -117,6 +117,11 @@ func TestTop10(t *testing.T) {
 			"Ohh my,,, my my,,,  ,,,my,,,",
 			[]string{"my", "ohh"},
 		},
+		{
+			"process ---",
+			"Hello - -- --- --- ---- - World",
+			[]string{"---", "--", "----", "hello", "world"},
+		},
 	}
 
 	for _, v := range cases {
