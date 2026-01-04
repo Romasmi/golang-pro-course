@@ -2,6 +2,10 @@ package hw04lrucache
 
 type Key string
 type itemsMap map[Key]*ListItem
+type keyValue struct {
+	key   Key
+	value interface{}
+}
 
 type Cache interface {
 	Set(key Key, value interface{}) bool
@@ -16,22 +20,32 @@ type lruCache struct {
 }
 
 func (l lruCache) Set(key Key, value interface{}) bool {
+	kv := &keyValue{
+		key:   key,
+		value: value,
+	}
 	if item, ok := l.items[key]; ok {
-		item.Value = value
+		item.Value = kv
 		l.queue.MoveToFront(item)
 		return true
 	}
-	if l.queue.Len() == l.capacity {
-		l.queue.Remove(l.queue.Back())
+	l.items[key] = l.queue.PushFront(kv)
+	if l.queue.Len() <= l.capacity {
+		return false
 	}
-	l.items[key] = l.queue.PushFront(value)
+	if last := l.queue.Back(); last != nil {
+		kv, _ := last.Value.(keyValue)
+		delete(l.items, kv.key)
+		l.queue.Remove(last)
+	}
 	return false
 }
 
 func (l lruCache) Get(key Key) (interface{}, bool) {
 	if item, ok := l.items[key]; ok {
 		l.queue.MoveToFront(item)
-		return l.queue.Front().Value, true
+		kv, _ := item.Value.(*keyValue)
+		return kv.value, true
 	}
 	return nil, false
 }
