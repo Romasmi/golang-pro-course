@@ -17,8 +17,8 @@ type lruCache struct {
 
 func (l lruCache) Set(key Key, value interface{}) bool {
 	if item, ok := l.items[key]; ok {
-		l.items[key] = item
-		l.queue.PushFront(item)
+		item.Value = value
+		l.queue.MoveToFront(item)
 		return true
 	}
 	if l.queue.Len() == l.capacity {
@@ -42,6 +42,10 @@ func (l lruCache) Clear() {
 }
 
 func NewCache(capacity int) Cache {
+	if capacity < 1 {
+		panic("capacity > 0 required")
+	}
+
 	return &lruCache{
 		capacity: capacity,
 		queue:    NewList(),

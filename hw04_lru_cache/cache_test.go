@@ -21,6 +21,10 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("simple", func(t *testing.T) {
+		shouldPanic(t, func() {
+			_ = NewCache(0)
+		})
+
 		c := NewCache(5)
 
 		wasInCache := c.Set("aaa", 100)
@@ -50,7 +54,7 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("purge logic", func(t *testing.T) {
-		// Write me
+		//c := NewCache(0)
 	})
 }
 
@@ -76,4 +80,14 @@ func TestCacheMultithreading(t *testing.T) {
 	}()
 
 	wg.Wait()
+}
+
+func shouldPanic(t *testing.T, f func()) {
+	t.Helper()
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("function did not panic as expected")
+		}
+	}()
+	f()
 }
