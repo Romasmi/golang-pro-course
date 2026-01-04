@@ -11,103 +11,81 @@ type List interface {
 }
 
 type ListItem struct {
-	Value    interface{}
-	Next     *ListItem
-	Prev     *ListItem
-	position int
+	Value interface{}
+	Next  *ListItem
+	Prev  *ListItem
 }
 
 type list struct {
-	hash hashMap
+	length      int
+	first, last *ListItem
 }
 
-type hashMap map[int]*ListItem
-
-func (l list) Len() int {
-	return len(l.hash)
+func (l *list) Len() int {
+	return l.length
 }
 
-func (l list) Front() *ListItem {
-	return l.at(0)
+func (l *list) Front() *ListItem {
+	return l.first
 }
 
-func (l list) Back() *ListItem {
-	return l.at(l.Len() - 1)
+func (l *list) Back() *ListItem {
+	return l.last
 }
 
-func (l list) PushFront(v interface{}) *ListItem {
-	return l.pushTo(v, 0)
-}
-
-func (l list) PushBack(v interface{}) *ListItem {
-	return l.pushTo(v, l.Len())
-}
-
-func (l list) Remove(i *ListItem) {
-	if i == nil {
-		return
+func (l *list) PushFront(v interface{}) *ListItem {
+	item := &ListItem{
+		Value: v,
+		Next:  l.first,
 	}
-	if i.Prev != nil {
+	l.first = item
+	l.length++
+	if l.length > 1 {
+		item.Next.Prev = item
+	} else {
+		l.last = l.first
+	}
+	return item
+}
+
+func (l *list) PushBack(v interface{}) *ListItem {
+	item := &ListItem{
+		Value: v,
+		Prev:  l.last,
+	}
+	l.last = item
+	l.length++
+	if l.length > 1 {
+		item.Prev.Next = item
+	} else {
+		l.last = l.first
+	}
+	return item
+}
+
+func (l *list) Remove(i *ListItem) {
+	switch {
+	case i.Prev != nil && i.Next != nil:
 		i.Prev.Next = i.Next
+		i.Next.Prev = i.Prev
+		break
+	case i == l.last:
+		l.last = i.Prev
+		i.Prev.Next = nil
+		i = nil
+	case i == l.first:
+		l.first = i.Next
+		i.Next.Prev = nil
 	}
-	if i.Next != nil {
-		i.Next = i.Prev
-	}
-	l.decIndex(i.position)
+	l.length--
+	i = nil
 }
 
-func (l list) MoveToFront(i *ListItem) {
+func (l *list) MoveToFront(i *ListItem) {
 	l.Remove(i)
 	l.PushFront(i.Value)
 }
 
 func NewList() List {
-	return &list{
-		hash: make(hashMap),
-	}
-}
-
-func (l list) at(i int) *ListItem {
-	if l.Len() == 0 {
-		return nil
-	}
-	item, ok := l.hash[i]
-	if ok == false {
-		return nil
-	}
-	item.position = i
-	return item
-}
-
-func (l list) incIndex(start int) {
-	for i := l.Len(); i > start; i-- {
-		l.hash[i] = l.hash[i-1]
-	}
-}
-
-func (l list) decIndex(start int) {
-	for i := start + 1; i < l.Len()+1; i++ {
-		l.hash[i-1] = l.hash[i]
-	}
-	delete(l.hash, l.Len()-1)
-}
-
-func (l list) pushTo(v interface{}, position int) *ListItem {
-	prev := l.at(position - 1)
-	next := l.at(position)
-	item := &ListItem{
-		Value:    v,
-		Prev:     prev,
-		Next:     next,
-		position: position,
-	}
-	if prev != nil {
-		prev.Next = item
-	}
-	if next != nil {
-		next.Prev = item
-	}
-	l.incIndex(position)
-	l.hash[position] = item
-	return item
+	return &list{}
 }
