@@ -58,7 +58,7 @@ func (l *list) PushBack(v interface{}) *ListItem {
 	if l.length > 1 {
 		item.Prev.Next = item
 	} else {
-		l.last = l.first
+		l.last, l.first = item, item
 	}
 	return item
 }
