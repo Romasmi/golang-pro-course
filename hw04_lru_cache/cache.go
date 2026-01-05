@@ -3,7 +3,9 @@ package hw04lrucache
 import "sync"
 
 type Key string
+
 type itemsMap map[Key]*ListItem
+
 type keyValue struct {
 	key   Key
 	value interface{}

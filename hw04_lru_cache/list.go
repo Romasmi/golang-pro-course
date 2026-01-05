@@ -68,7 +68,6 @@ func (l *list) Remove(i *ListItem) {
 	case i.Prev != nil && i.Next != nil:
 		i.Prev.Next = i.Next
 		i.Next.Prev = i.Prev
-		break
 	case i == l.last:
 		l.last = i.Prev
 		if i.Prev != nil {
