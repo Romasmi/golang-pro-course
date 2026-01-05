@@ -53,7 +53,7 @@ func TestCache(t *testing.T) {
 		require.Nil(t, val)
 	})
 
-	t.Run("purge logic", func(t *testing.T) {
+	t.Run("purge logic - 1 capacity", func(t *testing.T) {
 		c := NewCache(1)
 		require.False(t, c.Set("a", 61))
 
@@ -70,6 +70,46 @@ func TestCache(t *testing.T) {
 		v, exist = c.Get("a")
 		require.True(t, exist)
 		require.Equal(t, v, 61)
+	})
+
+	t.Run("purge logic - N capacity", func(t *testing.T) {
+		c := NewCache(3)
+		require.False(t, c.Set("a", 61))
+
+		v, exist := c.Get("a")
+		require.True(t, exist)
+		require.Equal(t, v, 61)
+
+		c.Set("b", 62)
+		v, exist = c.Get("b")
+		require.True(t, exist)
+		require.Equal(t, v, 62)
+
+		c.Set("c", 63)
+		v, exist = c.Get("c")
+		require.True(t, exist)
+		require.Equal(t, v, 63)
+
+		// exceed capacity - "a" should be removed, "b" still should exist
+		require.False(t, c.Set("d", 64))
+		v, exist = c.Get("d")
+		require.True(t, exist)
+		require.Equal(t, v, 64)
+
+		// b still exists
+		v, exist = c.Get("b")
+		require.True(t, exist)
+		require.Equal(t, v, 62)
+
+		// b purged
+		require.False(t, c.Set("a", 61))
+		v, exist = c.Get("a")
+		require.True(t, exist)
+		require.Equal(t, v, 61)
+
+		v, exist = c.Get("b")
+		require.False(t, exist)
+		require.Equal(t, v, nil)
 	})
 }
 
