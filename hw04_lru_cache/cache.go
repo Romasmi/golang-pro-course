@@ -30,13 +30,12 @@ func (l lruCache) Set(key Key, value interface{}) bool {
 		return true
 	}
 	l.items[key] = l.queue.PushFront(kv)
-	if l.queue.Len() <= l.capacity {
-		return false
-	}
-	if last := l.queue.Back(); last != nil {
-		kv, _ := last.Value.(keyValue)
-		delete(l.items, kv.key)
-		l.queue.Remove(last)
+	if l.queue.Len() > l.capacity {
+		if last := l.queue.Back(); last != nil {
+			kv, _ := last.Value.(*keyValue)
+			delete(l.items, kv.key)
+			l.queue.Remove(last)
+		}
 	}
 	return false
 }

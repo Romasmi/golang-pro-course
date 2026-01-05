@@ -71,11 +71,15 @@ func (l *list) Remove(i *ListItem) {
 		break
 	case i == l.last:
 		l.last = i.Prev
-		i.Prev.Next = nil
+		if i.Prev != nil {
+			i.Prev.Next = nil
+		}
 		i = nil
 	case i == l.first:
 		l.first = i.Next
-		i.Next.Prev = nil
+		if i.Next != nil {
+			i.Next.Prev = nil
+		}
 	}
 	l.length--
 	i = nil
