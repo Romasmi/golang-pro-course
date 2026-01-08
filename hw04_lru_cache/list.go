@@ -64,6 +64,27 @@ func (l *list) PushBack(v interface{}) *ListItem {
 }
 
 func (l *list) Remove(i *ListItem) {
+	l.softRemove(i)
+	l.length--
+	i = nil
+}
+
+func (l *list) MoveToFront(i *ListItem) {
+	if l.length == 1 {
+		return
+	}
+	l.softRemove(i)
+	i.Prev = nil
+	i.Next = l.first
+	l.first.Prev = i
+	l.first = i
+}
+
+func NewList() List {
+	return &list{}
+}
+
+func (l *list) softRemove(i *ListItem) {
 	switch {
 	case i.Prev != nil && i.Next != nil:
 		i.Prev.Next = i.Next
@@ -79,19 +100,4 @@ func (l *list) Remove(i *ListItem) {
 			i.Next.Prev = nil
 		}
 	}
-	l.length--
-	i = nil
-}
-
-func (l *list) MoveToFront(i *ListItem) {
-	if l.length == 1 {
-		return
-	}
-
-	l.Remove(i)
-	l.PushFront(i.Value)
-}
-
-func NewList() List {
-	return &list{}
 }
