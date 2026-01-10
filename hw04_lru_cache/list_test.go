@@ -67,6 +67,5 @@ func TestList(t *testing.T) {
 		l.MoveToFront(last) // [10, 20]
 		require.NotNil(t, last)
 		require.Equal(t, last.Value, lastValue)
-
 	})
 }

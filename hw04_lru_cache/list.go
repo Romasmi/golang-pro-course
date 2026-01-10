@@ -66,7 +66,6 @@ func (l *list) PushBack(v interface{}) *ListItem {
 func (l *list) Remove(i *ListItem) {
 	l.softRemove(i)
 	l.length--
-	i = nil
 }
 
 func (l *list) MoveToFront(i *ListItem) {
