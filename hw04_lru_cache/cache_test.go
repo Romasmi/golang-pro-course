@@ -101,10 +101,10 @@ func TestCache(t *testing.T) {
 		require.Equal(t, v, 64)
 
 		// b still exists
-		v, exist = c.Get("b")
+		v, exist = c.Get("d")
 		// [d, c, b] len 3, cap 3
 		require.True(t, exist)
-		require.Equal(t, v, 62)
+		require.Equal(t, v, 64)
 
 		// b purged because it's not used
 		require.False(t, c.Set("a", 61))
