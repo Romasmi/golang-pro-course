@@ -21,6 +21,10 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("simple", func(t *testing.T) {
+		shouldPanic(t, func() {
+			_ = NewCache(0)
+		})
+
 		c := NewCache(5)
 
 		wasInCache := c.Set("aaa", 100)
@@ -49,14 +53,73 @@ func TestCache(t *testing.T) {
 		require.Nil(t, val)
 	})
 
-	t.Run("purge logic", func(t *testing.T) {
-		// Write me
+	t.Run("purge logic - 1 capacity", func(t *testing.T) {
+		c := NewCache(1)
+		require.False(t, c.Set("a", 61))
+
+		v, exist := c.Get("a")
+		require.True(t, exist)
+		require.Equal(t, v, 61)
+
+		c.Set("b", 62)
+		v, exist = c.Get("b")
+		require.True(t, exist)
+		require.Equal(t, v, 62)
+
+		require.False(t, c.Set("a", 61))
+		v, exist = c.Get("a")
+		require.True(t, exist)
+		require.Equal(t, v, 61)
+	})
+
+	t.Run("purge logic - N capacity", func(t *testing.T) {
+		c := NewCache(3)
+		require.False(t, c.Set("a", 61))
+		// [a] len 1, cap 3
+
+		v, exist := c.Get("a")
+		require.True(t, exist)
+		require.Equal(t, v, 61)
+
+		c.Set("b", 62)
+		// [b, a] len 2, cap 3
+		v, exist = c.Get("b")
+		require.True(t, exist)
+		require.Equal(t, v, 62)
+
+		c.Set("c", 63)
+		// [c, b, a] len 3, cap 3
+		v, exist = c.Get("c")
+		require.True(t, exist)
+		require.Equal(t, v, 63)
+
+		// exceed capacity - "a" should be removed, "b" still should exist
+		require.False(t, c.Set("d", 64))
+		// [d, c, b] len 3, cap 3
+		v, exist = c.Get("d")
+		require.True(t, exist)
+		require.Equal(t, v, 64)
+
+		// b still exists
+		v, exist = c.Get("d")
+		// [d, c, b] len 3, cap 3
+		require.True(t, exist)
+		require.Equal(t, v, 64)
+
+		// b purged because it's not used
+		require.False(t, c.Set("a", 61))
+		v, exist = c.Get("a")
+		// [a, d, c] len 3, cap 3
+		require.True(t, exist)
+		require.Equal(t, v, 61)
+
+		v, exist = c.Get("b")
+		require.False(t, exist)
+		require.Equal(t, v, nil)
 	})
 }
 
-func TestCacheMultithreading(t *testing.T) {
-	t.Skip() // Remove me if task with asterisk completed.
-
+func TestCacheMultithreading(*testing.T) {
 	c := NewCache(10)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
@@ -76,4 +139,14 @@ func TestCacheMultithreading(t *testing.T) {
 	}()
 
 	wg.Wait()
+}
+
+func shouldPanic(t *testing.T, f func()) {
+	t.Helper()
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("function did not panic as expected")
+		}
+	}()
+	f()
 }

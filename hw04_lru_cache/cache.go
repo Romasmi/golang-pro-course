@@ -1,6 +1,15 @@
 package hw04lrucache
 
+import "sync"
+
 type Key string
+
+type itemsMap map[Key]*ListItem
+
+type keyValue struct {
+	key   Key
+	value interface{}
+}
 
 type Cache interface {
 	Set(key Key, value interface{}) bool
@@ -9,17 +18,60 @@ type Cache interface {
 }
 
 type lruCache struct {
-	Cache // Remove me after realization.
-
 	capacity int
 	queue    List
 	items    map[Key]*ListItem
+	mu       sync.Mutex
+}
+
+func (l *lruCache) Set(key Key, value interface{}) bool {
+	kv := &keyValue{
+		key:   key,
+		value: value,
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if item, ok := l.items[key]; ok {
+		item.Value = kv
+		l.queue.MoveToFront(item)
+		return true
+	}
+	l.items[key] = l.queue.PushFront(kv)
+	if l.queue.Len() > l.capacity {
+		if last := l.queue.Back(); last != nil {
+			kv, _ := last.Value.(*keyValue)
+			delete(l.items, kv.key)
+			l.queue.Remove(last)
+		}
+	}
+	return false
+}
+
+func (l *lruCache) Get(key Key) (interface{}, bool) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if item, ok := l.items[key]; ok {
+		l.queue.MoveToFront(item)
+		kv, _ := item.Value.(*keyValue)
+		return kv.value, true
+	}
+	return nil, false
+}
+
+func (l *lruCache) Clear() {
+	l.queue = NewList()
+	l.items = make(itemsMap, l.capacity)
 }
 
 func NewCache(capacity int) Cache {
+	if capacity < 1 {
+		panic("capacity > 0 required")
+	}
+
 	return &lruCache{
 		capacity: capacity,
 		queue:    NewList(),
-		items:    make(map[Key]*ListItem, capacity),
+		items:    make(itemsMap, capacity),
 	}
 }
