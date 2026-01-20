@@ -2,19 +2,20 @@ package hw05parallelexecution
 
 import (
 	"errors"
-	"fmt"
+	"math"
 	"sync"
 	"sync/atomic"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+var ErrInvalidWorkersCount = errors.New("invalid workers count")
 
 type Task func() error
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
 	if n < 1 {
-		return fmt.Errorf("invalid workers count")
+		return ErrInvalidWorkersCount
 	}
 
 	if m <= 0 {
@@ -30,12 +31,13 @@ func Run(tasks []Task, n, m int) error {
 				return
 			}
 		}
-		close(jobs)
+		defer close(jobs)
 	}()
 
 	wg := sync.WaitGroup{}
 
-	for range n {
+	workersCount := int(math.Min(float64(n), float64(len(tasks))))
+	for range workersCount {
 		wg.Go(func() {
 			worker(jobs, errsCounter, m)
 		})
