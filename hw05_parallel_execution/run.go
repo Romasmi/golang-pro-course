@@ -1,6 +1,7 @@
 package hw05parallelexecution
 
 import (
+	"context"
 	"errors"
 	"math"
 	"sync"
@@ -26,22 +27,24 @@ func Run(tasks []Task, n, m int) error {
 
 	jobs := make(chan Task, len(tasks))
 	errsCounter := &atomic.Int64{}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
+		defer close(jobs)
 		for _, v := range tasks {
-			jobs <- v
-			if errsCounter.Load() >= int64(m) {
+			select {
+			case <-ctx.Done():
 				return
+			case jobs <- v:
 			}
 		}
-		defer close(jobs)
 	}()
 
 	wg := sync.WaitGroup{}
-
 	workersCount := int(math.Min(float64(n), float64(len(tasks))))
 	for range workersCount {
 		wg.Go(func() {
-			worker(jobs, errsCounter, m)
+			worker(ctx, jobs, errsCounter, m, cancel)
 		})
 	}
 	wg.Wait()
@@ -52,13 +55,21 @@ func Run(tasks []Task, n, m int) error {
 	return nil
 }
 
-func worker(jobs <-chan Task, errCounter *atomic.Int64, maxErrCount int) {
-	for job := range jobs {
-		if job() != nil {
-			errCounter.Add(1)
-		}
-		if errCounter.Load() >= int64(maxErrCount) {
+func worker(ctx context.Context, jobs <-chan Task, errCounter *atomic.Int64, maxErrCount int, cancel context.CancelFunc) {
+	for {
+		select {
+		case <-ctx.Done():
 			return
+		case job, ok := <-jobs:
+			if !ok {
+				return
+			}
+			if job() != nil {
+				if errCounter.Add(1) >= int64(maxErrCount) {
+					cancel()
+					return
+				}
+			}
 		}
 	}
 }
