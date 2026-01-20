@@ -7,8 +7,10 @@ import (
 	"sync/atomic"
 )
 
-var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
-var ErrInvalidWorkersCount = errors.New("invalid workers count")
+var (
+	ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+	ErrInvalidWorkersCount = errors.New("invalid workers count")
+)
 
 type Task func() error
 
