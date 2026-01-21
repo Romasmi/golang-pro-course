@@ -41,9 +41,11 @@ func Run(tasks []Task, n, m int) error {
 	wg := sync.WaitGroup{}
 	workersCount := int(math.Min(float64(n), float64(len(tasks))))
 	for range workersCount {
-		wg.Go(func() {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 			worker(ctx, jobs, errsCounter, m, cancel)
-		})
+		}()
 	}
 	wg.Wait()
 
