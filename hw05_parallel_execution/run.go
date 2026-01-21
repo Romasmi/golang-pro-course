@@ -53,7 +53,9 @@ func Run(tasks []Task, n, m int) error {
 	return nil
 }
 
-func worker(ctx context.Context, jobs <-chan Task, errCounter *atomic.Int64, maxErrCount int, cancel context.CancelFunc) {
+func worker(
+	ctx context.Context, jobs <-chan Task, errCounter *atomic.Int64, maxErrCount int, cancel context.CancelFunc,
+) {
 	for {
 		select {
 		case <-ctx.Done():
