@@ -29,14 +29,16 @@ func Run(tasks []Task, n, m int) error {
 	errsCounter := &atomic.Int64{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	for _, v := range tasks {
-		select {
-		case <-ctx.Done():
-			break
-		case jobs <- v:
+	go func() {
+		defer close(jobs)
+		for _, v := range tasks {
+			select {
+			case <-ctx.Done():
+				return
+			case jobs <- v:
+			}
 		}
-	}
-	close(jobs)
+	}()
 
 	wg := sync.WaitGroup{}
 	workersCount := int(math.Min(float64(n), float64(len(tasks))))
