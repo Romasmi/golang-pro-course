@@ -25,7 +25,8 @@ func runStage(in, done In, stage Stage) Out {
 			select {
 			case <-done:
 				go func() {
-					for range stageOut {
+					for v := range stageOut {
+						_ = v
 					}
 				}()
 				return
