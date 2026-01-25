@@ -21,6 +21,9 @@ func runStage(in, done In, stage Stage) Out {
 	go func() {
 		defer close(out)
 		stageOut := stage(in)
+		if stageOut == nil {
+			return
+		}
 		for {
 			select {
 			case <-done:
