@@ -1,6 +1,6 @@
 module github.com/Romasmi/golang-pro-course/hw05_parallel_execution
 
-go 1.24.0
+go 1.23.0
 
 require (
 	github.com/stretchr/testify v1.11.1
