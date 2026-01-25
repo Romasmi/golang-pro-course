@@ -24,11 +24,7 @@ func runStage(in, done In, stage Stage) Out {
 		for {
 			select {
 			case <-done:
-				go func() {
-					for v := range stageOut {
-						_ = v
-					}
-				}()
+				go drainStageOut(stageOut)
 				return
 			case v, ok := <-stageOut:
 				if !ok {
@@ -36,6 +32,7 @@ func runStage(in, done In, stage Stage) Out {
 				}
 				select {
 				case <-done:
+					go drainStageOut(stageOut)
 					return
 				case out <- v:
 				}
@@ -43,4 +40,13 @@ func runStage(in, done In, stage Stage) Out {
 		}
 	}()
 	return out
+}
+
+func drainStageOut(out Out) {
+	if out == nil {
+		return
+	}
+	for v := range out {
+		_ = v
+	}
 }
