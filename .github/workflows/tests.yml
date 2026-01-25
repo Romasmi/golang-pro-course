@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Linters
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v6
         with:
           version: ${{ env.GOLANGCI_LINT_VERSION }}
           working-directory: ${{ env.BRANCH }}
