@@ -3,7 +3,6 @@ package hw05parallelexecution
 import (
 	"context"
 	"errors"
-	"math"
 	"sync"
 	"sync/atomic"
 )
@@ -25,7 +24,8 @@ func Run(tasks []Task, n, m int) error {
 		return ErrErrorsLimitExceeded
 	}
 
-	jobs := make(chan Task, len(tasks))
+	workersCount := min(n, len(tasks))
+	jobs := make(chan Task, workersCount)
 	errsCounter := &atomic.Int64{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -41,7 +41,6 @@ func Run(tasks []Task, n, m int) error {
 	}()
 
 	wg := sync.WaitGroup{}
-	workersCount := int(math.Min(float64(n), float64(len(tasks))))
 	for range workersCount {
 		wg.Add(1)
 		go func() {
