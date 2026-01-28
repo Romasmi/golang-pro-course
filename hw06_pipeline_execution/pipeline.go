@@ -34,10 +34,10 @@ func runStage(in, done In, stage Stage) Out {
 					return
 				}
 				select {
+				case out <- v:
 				case <-done:
 					go drainStageOut(stageOut)
 					return
-				case out <- v:
 				}
 			}
 		}
