@@ -49,7 +49,6 @@ func drainStageOut(out Out) {
 	if out == nil {
 		return
 	}
-	for v := range out {
-		_ = v
+	for range out {
 	}
 }
