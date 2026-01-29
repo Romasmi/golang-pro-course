@@ -58,6 +58,6 @@ func drainStageOut(out Out) {
 		return
 	}
 	for v := range out {
-		_ = v //for linter
+		_ = v
 	}
 }
