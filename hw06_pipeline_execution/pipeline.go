@@ -27,7 +27,7 @@ func runStage(in, done In, stage Stage) Out {
 		for {
 			select {
 			case <-done:
-				drainStageOut(stageOut)
+				go drainStageOut(stageOut)
 				return
 			case v, ok := <-stageOut:
 				if !ok {
@@ -36,7 +36,7 @@ func runStage(in, done In, stage Stage) Out {
 				select {
 				case out <- v:
 				case <-done:
-					drainStageOut(stageOut)
+					go drainStageOut(stageOut)
 					return
 				}
 			}
