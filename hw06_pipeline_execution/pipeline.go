@@ -31,7 +31,7 @@ func WithDone(stage Stage, done In) Stage {
 			for {
 				select {
 				case <-done:
-					go drainStageOut(stageOut)
+					go drainStageOut(stageOut, done)
 					return
 
 				case v, ok := <-stageOut:
@@ -41,8 +41,6 @@ func WithDone(stage Stage, done In) Stage {
 
 					select {
 					case out <- v:
-					case <-done:
-						go drainStageOut(stageOut)
 						return
 					}
 				}
@@ -53,11 +51,18 @@ func WithDone(stage Stage, done In) Stage {
 	}
 }
 
-func drainStageOut(out Out) {
+func drainStageOut(out Out, done In) {
 	if out == nil {
 		return
 	}
-	for v := range out {
-		_ = v
+	for {
+		select {
+		case _, ok := <-out:
+			if !ok {
+				return
+			}
+		case <-done:
+			return
+		}
 	}
 }
