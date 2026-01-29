@@ -41,6 +41,8 @@ func WithDone(stage Stage, done In) Stage {
 
 					select {
 					case out <- v:
+					case <-done:
+						go drainStageOut(stageOut, done)
 						return
 					}
 				}
