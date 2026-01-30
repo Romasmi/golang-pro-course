@@ -27,11 +27,11 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 func WithDone(stage Stage, done In) Stage {
 	return func(in In) Out {
 		out := make(Bi)
+		stageOut := stage(in)
 
 		go func() {
 			defer close(out)
 
-			stageOut := stage(in)
 			if stageOut == nil {
 				return
 			}
