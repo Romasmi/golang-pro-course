@@ -9,6 +9,14 @@ type (
 type Stage func(in In) (out Out)
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
+	select {
+	case <-done:
+		out := make(Bi)
+		close(out)
+		return out
+	default:
+	}
+
 	out := in
 	for _, s := range stages {
 		out = WithDone(s, done)(out)
