@@ -37,6 +37,36 @@ func TestPipeline(t *testing.T) {
 		g("Stringifier", func(v interface{}) interface{} { return strconv.Itoa(v.(int)) }),
 	}
 
+	t.Run("empty input", func(t *testing.T) {
+		in := make(Bi)
+		close(in)
+
+		result := make([]string, 0)
+		for s := range ExecutePipeline(in, nil, stages...) {
+			result = append(result, s.(string))
+		}
+
+		require.Len(t, result, 0)
+	})
+
+	t.Run("no stages", func(t *testing.T) {
+		in := make(Bi)
+		data := []int{1, 2, 3}
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		result := make([]int, 0)
+		for v := range ExecutePipeline(in, nil) {
+			result = append(result, v.(int))
+		}
+		require.Equal(t, data, result)
+	})
+
 	t.Run("simple case", func(t *testing.T) {
 		in := make(Bi)
 		data := []int{1, 2, 3, 4, 5}
@@ -94,32 +124,32 @@ func TestPipeline(t *testing.T) {
 }
 
 func TestAllStageStop(t *testing.T) {
-	wg := sync.WaitGroup{}
-	// Stage generator
-	g := func(_ string, f func(v interface{}) interface{}) Stage {
-		return func(in In) Out {
-			out := make(Bi)
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				defer close(out)
-				for v := range in {
-					time.Sleep(sleepPerStage)
-					out <- f(v)
-				}
-			}()
-			return out
-		}
-	}
-
-	stages := []Stage{
-		g("Dummy", func(v interface{}) interface{} { return v }),
-		g("Multiplier (* 2)", func(v interface{}) interface{} { return v.(int) * 2 }),
-		g("Adder (+ 100)", func(v interface{}) interface{} { return v.(int) + 100 }),
-		g("Stringifier", func(v interface{}) interface{} { return strconv.Itoa(v.(int)) }),
-	}
-
 	t.Run("done case", func(t *testing.T) {
+		wg := sync.WaitGroup{}
+		// Stage generator
+		g := func(_ string, f func(v interface{}) interface{}) Stage {
+			return func(in In) Out {
+				out := make(Bi)
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					defer close(out)
+					for v := range in {
+						time.Sleep(sleepPerStage)
+						out <- f(v)
+					}
+				}()
+				return out
+			}
+		}
+
+		stages := []Stage{
+			g("Dummy", func(v interface{}) interface{} { return v }),
+			g("Multiplier (* 2)", func(v interface{}) interface{} { return v.(int) * 2 }),
+			g("Adder (+ 100)", func(v interface{}) interface{} { return v.(int) + 100 }),
+			g("Stringifier", func(v interface{}) interface{} { return strconv.Itoa(v.(int)) }),
+		}
+
 		in := make(Bi)
 		done := make(Bi)
 		data := []int{1, 2, 3, 4, 5}
@@ -145,6 +175,5 @@ func TestAllStageStop(t *testing.T) {
 		wg.Wait()
 
 		require.Len(t, result, 0)
-
 	})
 }
