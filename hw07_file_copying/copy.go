@@ -128,7 +128,9 @@ func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf c
 
 		if n > 0 {
 			left -= int64(n)
-			buf <- buffer[:n]
+			tmp := make([]byte, n)
+			copy(tmp, buffer[:n])
+			buf <- tmp
 		}
 	}
 }
