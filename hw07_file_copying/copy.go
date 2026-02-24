@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"sync"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -16,10 +18,16 @@ var (
 
 const bufferDefaultSize = 1024 * 32
 
+var ProgressBar *pb.ProgressBar
+
 func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err := validate(fromPath, offset); err != nil {
 		return err
 	}
+	if ProgressBar != nil {
+		defer ProgressBar.Finish()
+	}
+
 	if fromPath == toPath {
 		return nil
 	}
@@ -48,16 +56,17 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf chan<- []byte, offset, limit int64) {
 	defer close(buf)
 	f, err := os.Open(from)
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(f)
 	if err != nil {
 		cancel()
 		return
 	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			cancel()
+			panic(err)
+		}
+	}(f)
 
 	fi, err := f.Stat()
 	if err != nil {
@@ -74,6 +83,7 @@ func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf c
 	}
 
 	buffer := make([]byte, bufferSize)
+
 	_, err = f.Seek(offset, 0)
 	if err != nil {
 		cancel()
@@ -100,9 +110,7 @@ func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf c
 		}
 		if n > 0 {
 			left -= int64(n)
-			chunk := make([]byte, n)
-			copy(chunk, buffer[:n])
-			buf <- chunk
+			buf <- buffer[:n]
 		}
 	}
 }
