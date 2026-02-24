@@ -13,7 +13,6 @@ import (
 var source = "./testdata/input.txt"
 
 func TestCopy(t *testing.T) {
-
 	t.Run("copying not existing file", func(t *testing.T) {
 		err := Copy("not_existing_file.txt", "copied_file.txt", 0, 0)
 		if err == nil || !errors.Is(err, ErrFileNotFound) {
@@ -90,6 +89,8 @@ func addCopyPostfix(path string) string {
 }
 
 func testCase(t *testing.T, offset, limit int, testFile string) {
+	t.Helper()
+
 	desc := addCopyPostfix("./testdata/" + testFile)
 	defer func(name string) {
 		err := os.Remove(name)
@@ -106,6 +107,8 @@ func testCase(t *testing.T, offset, limit int, testFile string) {
 }
 
 func mustFilesEqual(t *testing.T, f1, f2 string) {
+	t.Helper()
+
 	expectedContent, err := os.ReadFile(f1)
 	assert.NoError(t, err)
 

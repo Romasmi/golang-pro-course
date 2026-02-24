@@ -41,9 +41,9 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	return nil
 }
 
-func readFile(ctx context.Context, cancel context.CancelFunc, fromPath string, bufChan chan<- []byte, offset, limit int64) {
-	defer close(bufChan)
-	f, err := os.Open(fromPath)
+func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf chan<- []byte, offset, limit int64) {
+	defer close(buf)
+	f, err := os.Open(from)
 	defer func(f *os.File) {
 		err := f.Close()
 		if err != nil {
@@ -98,7 +98,7 @@ func readFile(ctx context.Context, cancel context.CancelFunc, fromPath string, b
 			left -= int64(n)
 			chunk := make([]byte, n)
 			copy(chunk, buffer[:n])
-			bufChan <- chunk
+			buf <- chunk
 		}
 	}
 }
