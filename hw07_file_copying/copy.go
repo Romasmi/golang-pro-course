@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -73,7 +74,7 @@ func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf c
 		err := f.Close()
 		if err != nil {
 			cancel()
-			panic(err)
+			fmt.Printf("error while close a file: %v", err)
 		}
 	}(f)
 
