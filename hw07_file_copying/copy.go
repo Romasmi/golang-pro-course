@@ -133,7 +133,7 @@ func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf c
 	}
 }
 
-func writeFile(ctx context.Context, cancel context.CancelFunc, toPath string, bufChan <-chan []byte, bar *pb.ProgressBar) {
+func writeFile(ctx context.Context, cancel context.CancelFunc, toPath string, buf <-chan []byte, bar *pb.ProgressBar) {
 	out, err := os.Create(toPath)
 	if err != nil {
 		cancel()
@@ -145,7 +145,7 @@ func writeFile(ctx context.Context, cancel context.CancelFunc, toPath string, bu
 		select {
 		case <-ctx.Done():
 			return
-		case buf, ok := <-bufChan:
+		case buf, ok := <-buf:
 			if !ok {
 				return
 			}
