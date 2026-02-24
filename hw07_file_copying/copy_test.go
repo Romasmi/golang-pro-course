@@ -46,4 +46,38 @@ func TestCopy(t *testing.T) {
 			t.Errorf("invalid error for offset exceeding file size: %v", err)
 		}
 	})
+
+	t.Run("copying itself", func(t *testing.T) {
+		source := "./testdata/input.txt"
+		desc := source
+		err := Copy(source, desc, 0, 0)
+		if err != nil {
+			t.Error(err)
+		}
+	})
+
+	t.Run("copying entire file", func(t *testing.T) {
+		source := "./testdata/input.txt"
+		desc := "./testdata/input_copy.txt"
+
+		err := Copy(source, desc, 0, 0)
+		if err != nil {
+			t.Error(err)
+		}
+		MustSizeEqual(t, source, desc)
+	})
+}
+
+func MustSizeEqual(t *testing.T, f1, f2 string) {
+	sourceInfo, err := os.Stat(f1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	descInfo, err := os.Stat(f2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sourceInfo.Size() != descInfo.Size() {
+		t.Errorf("invalid file sizes: %d != %d", sourceInfo.Size(), descInfo.Size())
+	}
 }
