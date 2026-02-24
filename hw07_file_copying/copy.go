@@ -13,7 +13,7 @@ var (
 	ErrFileNotFound          = errors.New("file not found")
 )
 
-var bufferSize = 1024 * 32
+const bufferDefaultSize = 1024 * 32
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err := validate(fromPath, offset); err != nil {
@@ -63,9 +63,13 @@ func readFile(ctx context.Context, cancel context.CancelFunc, fromPath string, b
 		limit = fi.Size()
 	}
 	left := limit
-	bufferSize = int(min(int64(bufferSize), limit))
+	bufferSize := int(min(int64(bufferDefaultSize), limit))
 	buffer := make([]byte, bufferSize)
 	_, err = f.Seek(offset, 0)
+	if err != nil {
+		cancel()
+		return
+	}
 	for {
 		select {
 		case <-ctx.Done():

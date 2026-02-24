@@ -3,10 +3,17 @@ package main
 import (
 	"errors"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
+var source = "./testdata/input.txt"
+
 func TestCopy(t *testing.T) {
+
 	t.Run("copying not existing file", func(t *testing.T) {
 		err := Copy("not_existing_file.txt", "copied_file.txt", 0, 0)
 		if err == nil || !errors.Is(err, ErrFileNotFound) {
@@ -48,7 +55,6 @@ func TestCopy(t *testing.T) {
 	})
 
 	t.Run("copying itself", func(t *testing.T) {
-		source := "./testdata/input.txt"
 		desc := source
 		err := Copy(source, desc, 0, 0)
 		if err != nil {
@@ -57,27 +63,54 @@ func TestCopy(t *testing.T) {
 	})
 
 	t.Run("copying entire file", func(t *testing.T) {
-		source := "./testdata/input.txt"
-		desc := "./testdata/input_copy.txt"
+		testCase(t, 0, 0, "out_offset0_limit0.txt")
+	})
 
-		err := Copy(source, desc, 0, 0)
-		if err != nil {
-			t.Error(err)
-		}
-		MustSizeEqual(t, source, desc)
+	t.Run("copy file: offset 0, limit 10", func(t *testing.T) {
+		testCase(t, 0, 10, "out_offset0_limit10.txt")
+	})
+
+	t.Run("copy file: offset 0, limit 10000 exceeds file size", func(t *testing.T) {
+		testCase(t, 0, 10000, "out_offset0_limit10000.txt")
+	})
+
+	t.Run("copy file: offset 100, limit 1000", func(t *testing.T) {
+		testCase(t, 100, 1000, "out_offset100_limit1000.txt")
+	})
+
+	t.Run("copy file: offset 6000, limit 1000", func(t *testing.T) {
+		testCase(t, 6000, 1000, "out_offset6000_limit1000.txt")
 	})
 }
 
-func MustSizeEqual(t *testing.T, f1, f2 string) {
-	sourceInfo, err := os.Stat(f1)
+func addCopyPostfix(path string) string {
+	ext := filepath.Ext(path)
+	name := strings.TrimSuffix(path, ext)
+	return name + "_copy" + ext
+}
+
+func testCase(t *testing.T, offset, limit int, testFile string) {
+	desc := addCopyPostfix("./testdata/" + testFile)
+	//defer func(name string) {
+	//	err := os.Remove(name)
+	//	if err != nil {
+	//		t.Fatal(err)
+	//	}
+	//}(desc)
+
+	err := Copy(source, desc, int64(offset), int64(limit))
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
-	descInfo, err := os.Stat(f2)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if sourceInfo.Size() != descInfo.Size() {
-		t.Errorf("invalid file sizes: %d != %d", sourceInfo.Size(), descInfo.Size())
-	}
+	mustFilesEqual(t, desc, "./testdata/"+testFile)
+}
+
+func mustFilesEqual(t *testing.T, f1, f2 string) {
+	expectedContent, err := os.ReadFile(f1)
+	assert.NoError(t, err)
+
+	actualContent, err := os.ReadFile(f2)
+	assert.NoError(t, err)
+
+	assert.Equal(t, expectedContent, actualContent, "file contents should match")
 }
