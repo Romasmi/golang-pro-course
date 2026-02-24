@@ -91,12 +91,12 @@ func addCopyPostfix(path string) string {
 
 func testCase(t *testing.T, offset, limit int, testFile string) {
 	desc := addCopyPostfix("./testdata/" + testFile)
-	//defer func(name string) {
-	//	err := os.Remove(name)
-	//	if err != nil {
-	//		t.Fatal(err)
-	//	}
-	//}(desc)
+	defer func(name string) {
+		err := os.Remove(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}(desc)
 
 	err := Copy(source, desc, int64(offset), int64(limit))
 	if err != nil {

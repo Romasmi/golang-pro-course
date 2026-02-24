@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"io"
 	"os"
 	"sync"
 )
@@ -60,39 +61,56 @@ func readFile(ctx context.Context, cancel context.CancelFunc, fromPath string, b
 		return
 	}
 	if limit == 0 {
-		limit = fi.Size()
+		limit = fi.Size() - offset
 	}
 	left := limit
-	bufferSize := int(min(int64(bufferDefaultSize), limit))
+	bufferSize := int(min(int64(bufferDefaultSize), left))
+	if bufferSize <= 0 {
+		return
+	}
+
 	buffer := make([]byte, bufferSize)
 	_, err = f.Seek(offset, 0)
 	if err != nil {
 		cancel()
 		return
 	}
-	for {
+
+	for left > 0 {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			b, err := f.Read(buffer)
-			if err != nil {
-				cancel()
+		}
+		if int64(len(buffer)) > left {
+			buffer = buffer[:left]
+		}
+
+		n, err := f.Read(buffer)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
 				return
 			}
-			left -= int64(b)
-			bufChan <- buffer[:b]
-			if left <= 0 {
-				return
-			}
-			if left < int64(bufferSize) {
-				buffer = buffer[:left]
-			}
+			cancel()
+			return
+		}
+		if n > 0 {
+			left -= int64(n)
+			chunk := make([]byte, n)
+			copy(chunk, buffer[:n])
+			bufChan <- chunk
 		}
 	}
 }
 
 func writeFile(ctx context.Context, cancel context.CancelFunc, toPath string, bufChan <-chan []byte) {
+	out, err := os.Create(toPath)
+	if err != nil {
+		cancel()
+		return
+	}
+	defer out.Close()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -101,9 +119,9 @@ func writeFile(ctx context.Context, cancel context.CancelFunc, toPath string, bu
 			if !ok {
 				return
 			}
-			err := os.WriteFile(toPath, buf, 0644)
-			if err != nil {
+			if _, err := out.Write(buf); err != nil {
 				cancel()
+				return
 			}
 		}
 	}
