@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,97 +12,110 @@ import (
 var source = "./testdata/input.txt"
 
 func TestCopy(t *testing.T) {
-	t.Run("copying not existing file", func(t *testing.T) {
-		err := Copy("not_existing_file.txt", "copied_file.txt", 0, 0)
-		if err == nil || !errors.Is(err, ErrFileNotFound) {
-			t.Errorf("invalid error for not existing file: %v", err)
-		}
-	})
+	tests := []struct {
+		name         string
+		from         string
+		to           string
+		offset       int64
+		limit        int64
+		wantErr      error
+		expectedFile string
+	}{
+		{
+			name:    "file not found",
+			from:    "not_existing_file.txt",
+			to:      "copied_file.txt",
+			wantErr: ErrFileNotFound,
+		},
+		{
+			name:    "unsupported file",
+			from:    "/dev/urandom",
+			to:      "copied_file.txt",
+			wantErr: ErrUnsupportedFile,
+		},
+		{
+			name:    "offset exceeds file size",
+			from:    source,
+			to:      "copied_file.txt",
+			offset:  10000,
+			limit:   1000,
+			wantErr: ErrOffsetExceedsFileSize,
+		},
+		{
+			name:    "copying itself",
+			from:    source,
+			to:      source,
+			wantErr: nil,
+		},
+		{
+			name:         "valid full copy",
+			from:         source,
+			to:           addCopyPostfix("./testdata/out_offset0_limit0.txt"),
+			expectedFile: "./testdata/out_offset0_limit0.txt",
+			wantErr:      nil,
+		},
+		{
+			name:         "valid partial copy: offset 0, limit 10",
+			from:         source,
+			to:           addCopyPostfix("./testdata/out_offset0_limit10.txt"),
+			offset:       0,
+			limit:        10,
+			expectedFile: "./testdata/out_offset0_limit10.txt",
+			wantErr:      nil,
+		},
+		{
+			name:         "valid partial copy: offset 0, limit 10000",
+			from:         source,
+			to:           addCopyPostfix("./testdata/out_offset0_limit10000.txt"),
+			offset:       0,
+			limit:        10000,
+			expectedFile: "./testdata/out_offset0_limit10000.txt",
+			wantErr:      nil,
+		},
+		{
+			name:         "valid partial copy: offset 100, limit 1000",
+			from:         source,
+			to:           addCopyPostfix("./testdata/out_offset100_limit1000.txt"),
+			offset:       100,
+			limit:        1000,
+			expectedFile: "./testdata/out_offset100_limit1000.txt",
+			wantErr:      nil,
+		},
+		{
+			name:         "valid partial copy: offset 6000, limit 1000",
+			from:         source,
+			to:           addCopyPostfix("./testdata/out_offset6000_limit1000.txt"),
+			offset:       6000,
+			limit:        1000,
+			expectedFile: "./testdata/out_offset6000_limit1000.txt",
+			wantErr:      nil,
+		},
+	}
 
-	t.Run("copying unsupported file", func(t *testing.T) {
-		err := Copy("/dev/urandom", "copied_file.txt", 0, 0)
-		if err == nil || !errors.Is(err, ErrUnsupportedFile) {
-			t.Errorf("invalid error for unsupported file: %v", err)
-		}
-	})
-
-	t.Run("offset exceeds file size", func(t *testing.T) {
-		tmpFile, err := os.CreateTemp("", "test_file.*.txt")
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer func(name string) {
-			err := os.Remove(name)
-			if err != nil {
-				t.Fatal(err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil && tt.from != tt.to {
+				defer os.Remove(tt.to)
 			}
-		}(tmpFile.Name())
 
-		content := []byte("test content")
-		if _, err := tmpFile.Write(content); err != nil {
-			t.Fatal(err)
-		}
-		if err := tmpFile.Close(); err != nil {
-			t.Fatal(err)
-		}
+			err := Copy(tt.from, tt.to, tt.offset, tt.limit)
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+				return
+			}
 
-		err = Copy(tmpFile.Name(), "copied_file.txt", int64(len(content)+1), 1000)
-		if err == nil || !errors.Is(err, ErrOffsetExceedsFileSize) {
-			t.Errorf("invalid error for offset exceeding file size: %v", err)
-		}
-	})
-
-	t.Run("copying itself", func(t *testing.T) {
-		desc := source
-		err := Copy(source, desc, 0, 0)
-		if err != nil {
-			t.Error(err)
-		}
-	})
-
-	t.Run("copying entire file", func(t *testing.T) {
-		testCase(t, 0, 0, "out_offset0_limit0.txt")
-	})
-
-	t.Run("copy file: offset 0, limit 10", func(t *testing.T) {
-		testCase(t, 0, 10, "out_offset0_limit10.txt")
-	})
-
-	t.Run("copy file: offset 0, limit 10000 exceeds file size", func(t *testing.T) {
-		testCase(t, 0, 10000, "out_offset0_limit10000.txt")
-	})
-
-	t.Run("copy file: offset 100, limit 1000", func(t *testing.T) {
-		testCase(t, 100, 1000, "out_offset100_limit1000.txt")
-	})
-
-	t.Run("copy file: offset 6000, limit 1000", func(t *testing.T) {
-		testCase(t, 6000, 1000, "out_offset6000_limit1000.txt")
-	})
+			assert.NoError(t, err)
+			if tt.expectedFile != "" {
+				mustFilesEqual(t, tt.to, tt.expectedFile)
+			}
+		})
+	}
 }
 
 func addCopyPostfix(path string) string {
 	ext := filepath.Ext(path)
 	name := strings.TrimSuffix(path, ext)
 	return name + "_copy" + ext
-}
-
-func testCase(t *testing.T, offset, limit int, testFile string) {
-	t.Helper()
-
-	desc := addCopyPostfix("./testdata/" + testFile)
-	defer func(name string) {
-		err := os.Remove(name)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}(desc)
-
-	err := Copy(source, desc, int64(offset), int64(limit))
-	if err != nil {
-		t.Error(err)
-	}
-	mustFilesEqual(t, desc, "./testdata/"+testFile)
 }
 
 func mustFilesEqual(t *testing.T, f1, f2 string) {
