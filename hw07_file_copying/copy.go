@@ -29,13 +29,17 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	wg.Go(func() {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 		readFile(ctx, cancel, fromPath, buffer, offset, limit)
-	})
+	}()
 
-	wg.Go(func() {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 		writeFile(ctx, cancel, toPath, buffer)
-	})
+	}()
 
 	wg.Wait()
 	return nil
