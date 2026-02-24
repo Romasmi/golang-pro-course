@@ -3,8 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-
-	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -28,8 +26,7 @@ func main() {
 		return
 	}
 
-	bar := pb.Full.Start64(limit)
-	ProgressBar = bar
+	ShowProgressBar = true
 
 	if err := Copy(from, to, offset, limit); err != nil {
 		fmt.Println(err)

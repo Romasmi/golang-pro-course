@@ -18,18 +18,26 @@ var (
 
 const bufferDefaultSize = 1024 * 32
 
-var ProgressBar *pb.ProgressBar
+var ShowProgressBar = false
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err := validate(fromPath, offset); err != nil {
 		return err
 	}
-	if ProgressBar != nil {
-		defer ProgressBar.Finish()
-	}
 
 	if fromPath == toPath {
 		return nil
+	}
+
+	var bar *pb.ProgressBar
+	if ShowProgressBar {
+		var err error
+		bar, err = newProgressBar(fromPath, offset, limit)
+		if err != nil {
+			return err
+		}
+		bar.Start()
+		defer bar.Finish()
 	}
 
 	buffer := make(chan []byte)
@@ -46,7 +54,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		writeFile(ctx, cancel, toPath, buffer)
+		writeFile(ctx, cancel, toPath, buffer, bar)
 	}()
 
 	wg.Wait()
@@ -55,6 +63,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf chan<- []byte, offset, limit int64) {
 	defer close(buf)
+
 	f, err := os.Open(from)
 	if err != nil {
 		cancel()
@@ -73,9 +82,16 @@ func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf c
 		cancel()
 		return
 	}
-	if limit == 0 {
-		limit = fi.Size() - offset
+
+	remaining := fi.Size() - offset
+	if remaining <= 0 {
+		return
 	}
+
+	if limit <= 0 || limit > remaining {
+		limit = remaining
+	}
+
 	left := limit
 	bufferSize := int(min(int64(bufferDefaultSize), left))
 	if bufferSize <= 0 {
@@ -96,6 +112,7 @@ func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf c
 			return
 		default:
 		}
+
 		if int64(len(buffer)) > left {
 			buffer = buffer[:left]
 		}
@@ -108,6 +125,7 @@ func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf c
 			cancel()
 			return
 		}
+
 		if n > 0 {
 			left -= int64(n)
 			buf <- buffer[:n]
@@ -115,7 +133,7 @@ func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf c
 	}
 }
 
-func writeFile(ctx context.Context, cancel context.CancelFunc, toPath string, bufChan <-chan []byte) {
+func writeFile(ctx context.Context, cancel context.CancelFunc, toPath string, bufChan <-chan []byte, bar *pb.ProgressBar) {
 	out, err := os.Create(toPath)
 	if err != nil {
 		cancel()
@@ -131,7 +149,11 @@ func writeFile(ctx context.Context, cancel context.CancelFunc, toPath string, bu
 			if !ok {
 				return
 			}
-			if _, err := out.Write(buf); err != nil {
+			n, err := out.Write(buf)
+			if bar != nil && n > 0 {
+				bar.Add(n)
+			}
+			if err != nil {
 				cancel()
 				return
 			}
@@ -163,4 +185,24 @@ func validate(fromPath string, offset int64) error {
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
+}
+
+func newProgressBar(from string, offset, limit int64) (*pb.ProgressBar, error) {
+	fs, err := os.Stat(from)
+	if err != nil {
+		return nil, err
+	}
+
+	remaining := fs.Size() - offset
+	if remaining < 0 {
+		remaining = 0
+	}
+
+	if limit <= 0 || limit > remaining {
+		limit = remaining
+	}
+
+	bar := pb.New64(limit)
+	bar.SetTemplateString(`{{percent .}} {{bar . }} {{counters .}}`)
+	return bar, nil
 }
