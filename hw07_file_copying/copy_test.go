@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -157,6 +158,12 @@ func TestCopy(t *testing.T) {
 			to:           addCopyPostfix(largeFileDst),
 			expectedFile: largeFileDst,
 			wantErr:      nil,
+		},
+		{
+			name:    "destination is a directory",
+			from:    source,
+			to:      t.TempDir(),
+			wantErr: syscall.EISDIR,
 		},
 	}
 
