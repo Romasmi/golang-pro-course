@@ -178,7 +178,7 @@ func validate(fromPath string, offset int64) error {
 		return ErrUnsupportedFile
 	}
 
-	if offset >= fileInfo.Size() {
+	if offset > 0 && offset >= fileInfo.Size() {
 		return ErrOffsetExceedsFileSize
 	}
 
