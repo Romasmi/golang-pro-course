@@ -26,6 +26,11 @@ func TestCopy(t *testing.T) {
 	err = os.WriteFile(existingFilename, []byte("some content"), 0644)
 	assert.NoError(t, err)
 
+	// prepare a large file
+	largeFileSrc, largeFileDst := generateLargeFile(t)
+	defer os.Remove(largeFileSrc)
+	defer os.Remove(largeFileDst)
+
 	tests := []struct {
 		name         string
 		from         string
@@ -139,6 +144,20 @@ func TestCopy(t *testing.T) {
 			to:      "./non_existent_dir/copy.txt",
 			wantErr: os.ErrNotExist,
 		},
+		{
+			name:         "full multi-chunk copy",
+			from:         largeFileDst,
+			to:           addCopyPostfix(largeFileDst),
+			expectedFile: largeFileDst,
+			wantErr:      nil,
+		},
+		{
+			name:         "full multi-chunk copy",
+			from:         largeFileDst,
+			to:           addCopyPostfix(largeFileDst),
+			expectedFile: largeFileDst,
+			wantErr:      nil,
+		},
 	}
 
 	for _, tt := range tests {
@@ -177,4 +196,26 @@ func mustFilesEqual(t *testing.T, f1, f2 string) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, expectedContent, actualContent, "file contents should match")
+}
+
+func generateLargeFile(t *testing.T) (string, string) {
+	// Generate a file significantly larger than bufferDefaultSize (32KB).
+	const fileSize = 512 * 1024
+
+	content := make([]byte, fileSize)
+	for i := range content {
+		content[i] = byte(i % 251)
+	}
+
+	src, err := os.CreateTemp("", "copy_src_*.bin")
+	assert.NoError(t, err)
+
+	_, err = src.Write(content)
+	assert.NoError(t, err)
+	assert.NoError(t, src.Close())
+
+	dst, err := os.CreateTemp("", "copy_dst_*.bin")
+	assert.NoError(t, err)
+
+	return src.Name(), dst.Name()
 }
