@@ -70,7 +70,13 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	return <-errCh
 }
 
-func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf chan<- []byte, offset, limit int64) error {
+func readFile(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	from string,
+	buf chan<- []byte,
+	offset, limit int64,
+) error {
 	defer close(buf)
 
 	f, err := os.Open(from)
@@ -149,7 +155,13 @@ func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf c
 	return nil
 }
 
-func writeFile(ctx context.Context, cancel context.CancelFunc, toPath string, buf <-chan []byte, bar *pb.ProgressBar) error {
+func writeFile(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	toPath string,
+	buf <-chan []byte,
+	bar *pb.ProgressBar,
+) error {
 	out, err := os.Create(toPath)
 	if err != nil {
 		cancel()

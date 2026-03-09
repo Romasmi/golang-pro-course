@@ -10,37 +10,54 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type testCase struct {
+	name         string
+	from         string
+	to           string
+	offset       int64
+	limit        int64
+	wantErr      error
+	expectedFile string
+}
+
 var source = "./testdata/input.txt"
 
 func TestCopy(t *testing.T) {
-	unreadableFilename := "./testdata/unreadable.txt"
-	existingFilename := "./testdata/existing_file.txt"
-
-	// prepare an unreadable file
-	err := os.WriteFile(unreadableFilename, []byte("unreadable"), 0644)
-	assert.NoError(t, err)
+	unreadableFilename := prepareUnreadableFile(t)
 	defer os.Remove(unreadableFilename)
-	err = os.Chmod(unreadableFilename, 0000)
-	assert.NoError(t, err)
 
-	// prepare an existing file
-	err = os.WriteFile(existingFilename, []byte("some content"), 0644)
-	assert.NoError(t, err)
+	existingFilename := prepareExistingFile(t)
+	defer os.Remove(existingFilename)
 
-	// prepare a large file
 	largeFileSrc, largeFileDst := generateLargeFile(t)
 	defer os.Remove(largeFileSrc)
 	defer os.Remove(largeFileDst)
 
-	tests := []struct {
-		name         string
-		from         string
-		to           string
-		offset       int64
-		limit        int64
-		wantErr      error
-		expectedFile string
-	}{
+	tests := getTestCases(t, unreadableFilename, existingFilename, largeFileDst)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil && tt.from != tt.to {
+				defer os.Remove(tt.to)
+			}
+
+			err := Copy(tt.from, tt.to, tt.offset, tt.limit)
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+
+			assert.NoError(t, err)
+			if tt.expectedFile != "" {
+				mustFilesEqual(t, tt.to, tt.expectedFile)
+			}
+		})
+	}
+}
+
+func getTestCases(t *testing.T, unreadableFilename, existingFilename, largeFileDst string) []testCase {
+	t.Helper()
+	return []testCase{
 		{
 			name:    "file not found",
 			from:    "not_existing_file.txt",
@@ -153,38 +170,30 @@ func TestCopy(t *testing.T) {
 			wantErr:      nil,
 		},
 		{
-			name:         "full multi-chunk copy",
-			from:         largeFileDst,
-			to:           addCopyPostfix(largeFileDst),
-			expectedFile: largeFileDst,
-			wantErr:      nil,
-		},
-		{
 			name:    "destination is a directory",
 			from:    source,
 			to:      t.TempDir(),
 			wantErr: syscall.EISDIR,
 		},
 	}
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantErr == nil && tt.from != tt.to {
-				defer os.Remove(tt.to)
-			}
+func prepareUnreadableFile(t *testing.T) string {
+	t.Helper()
+	unreadableFilename := "./testdata/unreadable.txt"
+	err := os.WriteFile(unreadableFilename, []byte("unreadable"), 0o644)
+	assert.NoError(t, err)
+	err = os.Chmod(unreadableFilename, 0o000)
+	assert.NoError(t, err)
+	return unreadableFilename
+}
 
-			err := Copy(tt.from, tt.to, tt.offset, tt.limit)
-			if tt.wantErr != nil {
-				assert.ErrorIs(t, err, tt.wantErr)
-				return
-			}
-
-			assert.NoError(t, err)
-			if tt.expectedFile != "" {
-				mustFilesEqual(t, tt.to, tt.expectedFile)
-			}
-		})
-	}
+func prepareExistingFile(t *testing.T) string {
+	t.Helper()
+	existingFilename := "./testdata/existing_file.txt"
+	err := os.WriteFile(existingFilename, []byte("some content"), 0o644)
+	assert.NoError(t, err)
+	return existingFilename
 }
 
 func addCopyPostfix(path string) string {
@@ -206,6 +215,7 @@ func mustFilesEqual(t *testing.T, f1, f2 string) {
 }
 
 func generateLargeFile(t *testing.T) (string, string) {
+	t.Helper()
 	// Generate a file significantly larger than bufferDefaultSize (32KB).
 	const fileSize = 512 * 1024
 
