@@ -12,6 +12,20 @@ import (
 var source = "./testdata/input.txt"
 
 func TestCopy(t *testing.T) {
+	unreadableFilename := "./testdata/unreadable.txt"
+	existingFilename := "./testdata/existing_file.txt"
+
+	// prepare an unreadable file
+	err := os.WriteFile(unreadableFilename, []byte("unreadable"), 0644)
+	assert.NoError(t, err)
+	defer os.Remove(unreadableFilename)
+	err = os.Chmod(unreadableFilename, 0000)
+	assert.NoError(t, err)
+
+	// prepare an existing file
+	err = os.WriteFile(existingFilename, []byte("some content"), 0644)
+	assert.NoError(t, err)
+
 	tests := []struct {
 		name         string
 		from         string
@@ -97,6 +111,33 @@ func TestCopy(t *testing.T) {
 			offset:  0,
 			limit:   0,
 			wantErr: nil,
+		},
+		{
+			name:    "overwrite existing destination file",
+			from:    "./testdata/empty.txt",
+			to:      existingFilename,
+			wantErr: nil,
+		},
+		{
+			name:         "limit exactly equal to file size",
+			from:         source,
+			to:           addCopyPostfix("./testdata/out_offset0_limit_full.txt"),
+			offset:       0,
+			limit:        10000,
+			expectedFile: "./testdata/out_offset0_limit0.txt",
+			wantErr:      nil,
+		},
+		{
+			name:    "unreadable file",
+			from:    unreadableFilename,
+			to:      "/tmp/unreadable_copy.txt",
+			wantErr: os.ErrPermission,
+		},
+		{
+			name:    "destination directory doesn't exist",
+			from:    source,
+			to:      "./non_existent_dir/copy.txt",
+			wantErr: os.ErrNotExist,
 		},
 	}
 
