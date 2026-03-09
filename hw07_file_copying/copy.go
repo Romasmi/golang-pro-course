@@ -42,33 +42,41 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	}
 
 	buffer := make(chan []byte)
+	errCh := make(chan error, 2)
 
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		readFile(ctx, cancel, fromPath, buffer, offset, limit)
+		if err := readFile(ctx, cancel, fromPath, buffer, offset, limit); err != nil {
+			errCh <- err
+		}
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		writeFile(ctx, cancel, toPath, buffer, bar)
+		if err := writeFile(ctx, cancel, toPath, buffer, bar); err != nil {
+			errCh <- err
+		}
 	}()
 
 	wg.Wait()
-	return nil
+	close(errCh)
+
+	return <-errCh
 }
 
-func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf chan<- []byte, offset, limit int64) {
+func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf chan<- []byte, offset, limit int64) error {
 	defer close(buf)
 
 	f, err := os.Open(from)
 	if err != nil {
 		cancel()
-		return
+		return err
 	}
 	defer func(f *os.File) {
 		err := f.Close()
@@ -81,22 +89,22 @@ func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf c
 	fi, err := f.Stat()
 	if err != nil {
 		cancel()
-		return
+		return err
 	}
 
 	remaining := fi.Size() - offset
 	if remaining <= 0 {
-		return
+		return nil
 	}
 
-	if limit <= 0 || limit > remaining {
+	if limit == 0 || limit > remaining {
 		limit = remaining
 	}
 
 	left := limit
 	bufferSize := int(min(int64(bufferDefaultSize), left))
 	if bufferSize <= 0 {
-		return
+		return nil
 	}
 
 	buffer := make([]byte, bufferSize)
@@ -104,13 +112,13 @@ func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf c
 	_, err = f.Seek(offset, 0)
 	if err != nil {
 		cancel()
-		return
+		return err
 	}
 
 	for left > 0 {
 		select {
 		case <-ctx.Done():
-			return
+			return ctx.Err()
 		default:
 		}
 
@@ -121,44 +129,49 @@ func readFile(ctx context.Context, cancel context.CancelFunc, from string, buf c
 		n, err := f.Read(buffer)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				return
+				return nil
 			}
 			cancel()
-			return
+			return err
 		}
 
 		if n > 0 {
 			left -= int64(n)
 			tmp := make([]byte, n)
 			copy(tmp, buffer[:n])
-			buf <- tmp
+			select {
+			case buf <- tmp:
+			case <-ctx.Done():
+				return ctx.Err()
+			}
 		}
 	}
+	return nil
 }
 
-func writeFile(ctx context.Context, cancel context.CancelFunc, toPath string, buf <-chan []byte, bar *pb.ProgressBar) {
+func writeFile(ctx context.Context, cancel context.CancelFunc, toPath string, buf <-chan []byte, bar *pb.ProgressBar) error {
 	out, err := os.Create(toPath)
 	if err != nil {
 		cancel()
-		return
+		return err
 	}
 	defer out.Close()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return
-		case buf, ok := <-buf:
+			return ctx.Err()
+		case data, ok := <-buf:
 			if !ok {
-				return
+				return nil
 			}
-			n, err := out.Write(buf)
+			n, err := out.Write(data)
 			if bar != nil && n > 0 {
 				bar.Add(n)
 			}
 			if err != nil {
 				cancel()
-				return
+				return err
 			}
 		}
 	}
@@ -201,7 +214,7 @@ func newProgressBar(from string, offset, limit int64) (*pb.ProgressBar, error) {
 		remaining = 0
 	}
 
-	if limit <= 0 || limit > remaining {
+	if limit == 0 || limit > remaining {
 		limit = remaining
 	}
 
