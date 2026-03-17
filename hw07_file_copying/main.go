@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 )
 
 var (
@@ -18,5 +19,17 @@ func init() {
 
 func main() {
 	flag.Parse()
-	// Place your code here.
+
+	if from == "" || to == "" {
+		fmt.Println("from and to arguments required")
+		flag.Usage()
+		return
+	}
+
+	ShowProgressBar = true
+
+	if err := Copy(from, to, offset, limit); err != nil {
+		fmt.Println(err)
+		return
+	}
 }

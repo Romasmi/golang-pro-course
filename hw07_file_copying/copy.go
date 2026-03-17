@@ -1,15 +1,236 @@
 package main
 
 import (
+	"context"
 	"errors"
+	"fmt"
+	"io"
+	"os"
+	"sync"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
 	ErrUnsupportedFile       = errors.New("unsupported file")
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
+	ErrFileNotFound          = errors.New("file not found")
 )
 
+const bufferDefaultSize = 1024 * 32
+
+var ShowProgressBar = false
+
 func Copy(fromPath, toPath string, offset, limit int64) error {
-	// Place your code here.
+	if err := validate(fromPath, offset); err != nil {
+		return err
+	}
+
+	if fromPath == toPath {
+		return nil
+	}
+
+	var bar *pb.ProgressBar
+	if ShowProgressBar {
+		var err error
+		bar, err = newProgressBar(fromPath, offset, limit)
+		if err != nil {
+			return err
+		}
+		bar.Start()
+		defer bar.Finish()
+	}
+
+	buffer := make(chan []byte)
+	errCh := make(chan error, 2)
+
+	wg := &sync.WaitGroup{}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := readFile(ctx, cancel, fromPath, buffer, offset, limit); err != nil {
+			errCh <- err
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := writeFile(ctx, cancel, toPath, buffer, bar); err != nil {
+			errCh <- err
+		}
+	}()
+
+	wg.Wait()
+	close(errCh)
+
+	return <-errCh
+}
+
+func readFile(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	from string,
+	buf chan<- []byte,
+	offset, limit int64,
+) error {
+	defer close(buf)
+
+	f, err := os.Open(from)
+	if err != nil {
+		cancel()
+		return err
+	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			cancel()
+			fmt.Printf("error while close a file: %v", err)
+		}
+	}(f)
+
+	fi, err := f.Stat()
+	if err != nil {
+		cancel()
+		return err
+	}
+
+	remaining := fi.Size() - offset
+	if remaining <= 0 {
+		return nil
+	}
+
+	if limit == 0 || limit > remaining {
+		limit = remaining
+	}
+
+	left := limit
+	bufferSize := int(min(int64(bufferDefaultSize), left))
+	if bufferSize <= 0 {
+		return nil
+	}
+
+	buffer := make([]byte, bufferSize)
+
+	_, err = f.Seek(offset, 0)
+	if err != nil {
+		cancel()
+		return err
+	}
+
+	for left > 0 {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		if int64(len(buffer)) > left {
+			buffer = buffer[:left]
+		}
+
+		n, err := f.Read(buffer)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			cancel()
+			return err
+		}
+
+		if n > 0 {
+			left -= int64(n)
+			tmp := make([]byte, n)
+			copy(tmp, buffer[:n])
+			select {
+			case buf <- tmp:
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
+	}
 	return nil
+}
+
+func writeFile(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	toPath string,
+	buf <-chan []byte,
+	bar *pb.ProgressBar,
+) error {
+	out, err := os.Create(toPath)
+	if err != nil {
+		cancel()
+		return err
+	}
+	defer out.Close()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case data, ok := <-buf:
+			if !ok {
+				return nil
+			}
+			n, err := out.Write(data)
+			if bar != nil && n > 0 {
+				bar.Add(n)
+			}
+			if err != nil {
+				cancel()
+				return err
+			}
+		}
+	}
+}
+
+func validate(fromPath string, offset int64) error {
+	if !fileExists(fromPath) {
+		return ErrFileNotFound
+	}
+
+	fileInfo, err := os.Stat(fromPath)
+	if err != nil {
+		return err
+	}
+
+	if !fileInfo.Mode().IsRegular() {
+		return ErrUnsupportedFile
+	}
+
+	if offset > 0 && offset >= fileInfo.Size() {
+		return ErrOffsetExceedsFileSize
+	}
+
+	return nil
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
+}
+
+func newProgressBar(from string, offset, limit int64) (*pb.ProgressBar, error) {
+	fs, err := os.Stat(from)
+	if err != nil {
+		return nil, err
+	}
+
+	remaining := fs.Size() - offset
+	if remaining < 0 {
+		remaining = 0
+	}
+
+	if limit == 0 || limit > remaining {
+		limit = remaining
+	}
+
+	bar := pb.New64(limit)
+	bar.SetTemplateString(`{{percent .}} {{bar . }} {{counters .}}`)
+	return bar, nil
 }
