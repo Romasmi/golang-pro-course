@@ -9,6 +9,14 @@ type (
 type Stage func(in In) (out Out)
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
+	select {
+	case <-done:
+		out := make(Bi)
+		close(out)
+		return out
+	default:
+	}
+
 	out := in
 	for _, s := range stages {
 		out = WithDone(s, done)(out)
@@ -19,11 +27,11 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 func WithDone(stage Stage, done In) Stage {
 	return func(in In) Out {
 		out := make(Bi)
+		stageOut := stage(in)
 
 		go func() {
 			defer close(out)
 
-			stageOut := stage(in)
 			if stageOut == nil {
 				return
 			}
