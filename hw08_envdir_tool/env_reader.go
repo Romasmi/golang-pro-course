@@ -3,17 +3,14 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"unicode"
-)
 
-var (
-	ErrFolderNotExist = errors.New("folder does not exist")
-	ErrEmptyFile      = errors.New("file is empty")
+	"golang.org/x/sync/errgroup"
 )
 
 type Environment map[string]EnvValue
@@ -38,13 +35,29 @@ func ReadDir(dir string) (Environment, error) {
 	}
 	envs := make(Environment, len(files))
 
+	var (
+		g  errgroup.Group
+		mu sync.Mutex
+	)
+
 	for _, file := range files {
-		env, err := getEnv(filepath.Join(dir, file))
-		if err != nil {
-			return nil, err
-		}
-		envs[env.Name] = env.Value
+		g.Go(func() error {
+			env, err := getEnv(filepath.Join(dir, file))
+			if err != nil {
+				return err
+			}
+
+			mu.Lock()
+			envs[env.Name] = env.Value
+			mu.Unlock()
+			return nil
+		})
 	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
 	return envs, nil
 }
 

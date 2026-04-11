@@ -11,6 +11,7 @@ func main() {
 	args := flag.Args()
 	if len(args) < 2 {
 		fmt.Println("Invalid args count.")
+		return
 	}
 	folder, cmd := processArgs(args)
 
