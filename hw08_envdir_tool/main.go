@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 )
 
 func main() {
@@ -11,10 +12,16 @@ func main() {
 	if len(args) < 2 {
 		fmt.Println("Invalid args count.")
 	}
-	folder, cmd, cmdArgs := processArgs(args)
-	fmt.Printf("Folder: %s, Command: %s, Args: %v\n", folder, cmd, cmdArgs)
+	folder, cmd := processArgs(args)
+
+	env, err := ReadDir(folder)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	os.Exit(RunCmd(cmd, env))
 }
 
-func processArgs(args []string) (string, string, []string) {
-	return args[0], args[1], args[2:]
+func processArgs(args []string) (string, []string) {
+	return args[0], args[1:]
 }
