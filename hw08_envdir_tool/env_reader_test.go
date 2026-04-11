@@ -10,14 +10,9 @@ import (
 func TestReadDir(t *testing.T) {
 	t.Run("valid files", func(t *testing.T) {
 		dir := t.TempDir()
-		err := os.WriteFile(filepath.Join(dir, "FOO"), []byte("123"), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = os.WriteFile(filepath.Join(dir, "BAR"), []byte("value"), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
+
+		createTestFile(t, dir, "FOO", "123")
+		createTestFile(t, dir, "BAR", "value")
 
 		got, err := ReadDir(dir)
 		if err != nil {
@@ -37,10 +32,8 @@ func TestReadDir(t *testing.T) {
 
 	t.Run("empty file - remove env var", func(t *testing.T) {
 		dir := t.TempDir()
-		err := os.WriteFile(filepath.Join(dir, "UNSET"), []byte{}, 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
+
+		createTestFile(t, dir, "UNSET", "")
 
 		got, err := ReadDir(dir)
 		if err != nil {
@@ -59,11 +52,9 @@ func TestReadDir(t *testing.T) {
 
 	t.Run("trim trailing spaces and tabs", func(t *testing.T) {
 		dir := t.TempDir()
+
 		// "value  \t " should be trimmed to "value"
-		err := os.WriteFile(filepath.Join(dir, "VAR"), []byte("value  \t \nother line"), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
+		createTestFile(t, dir, "VAR", "value  \t \nother line")
 
 		got, err := ReadDir(dir)
 		if err != nil {
@@ -82,11 +73,9 @@ func TestReadDir(t *testing.T) {
 
 	t.Run("replace null bytes with newline", func(t *testing.T) {
 		dir := t.TempDir()
+
 		// "hello\x00world" should be "hello\nworld"
-		err := os.WriteFile(filepath.Join(dir, "NULL"), []byte("hello\x00world"), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
+		createTestFile(t, dir, "NULL", "hello\x00world")
 
 		got, err := ReadDir(dir)
 		if err != nil {
@@ -105,12 +94,10 @@ func TestReadDir(t *testing.T) {
 
 	t.Run("invalid name with equals", func(t *testing.T) {
 		dir := t.TempDir()
-		err := os.WriteFile(filepath.Join(dir, "INVALID=NAME"), []byte("value"), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
 
-		_, err = ReadDir(dir)
+		createTestFile(t, dir, "INVALID=NAME", "value")
+
+		_, err := ReadDir(dir)
 		if err == nil {
 			t.Error("ReadDir() expected error for invalid filename, got nil")
 		}
@@ -118,14 +105,12 @@ func TestReadDir(t *testing.T) {
 
 	t.Run("ignore subdirectories", func(t *testing.T) {
 		dir := t.TempDir()
-		err := os.Mkdir(filepath.Join(dir, "SUBDIR"), 0755)
+		err := os.Mkdir(filepath.Join(dir, "SUBDIR"), 0o755)
 		if err != nil {
 			t.Fatal(err)
 		}
-		err = os.WriteFile(filepath.Join(dir, "FOO"), []byte("123"), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
+
+		createTestFile(t, dir, "FOO", "123")
 
 		got, err := ReadDir(dir)
 		if err != nil {
@@ -148,4 +133,12 @@ func TestReadDir(t *testing.T) {
 			t.Error("ReadDir() expected error for non-existent directory, got nil")
 		}
 	})
+}
+
+func createTestFile(t *testing.T, dir, name, content string) {
+	t.Helper()
+	err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
 }

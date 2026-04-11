@@ -9,6 +9,7 @@ import (
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
 func RunCmd(cmd []string, env Environment) (returnCode int) {
+	// #nosec G204
 	outCmd := exec.Command(cmd[0], cmd[1:]...)
 	outCmd.Stdout = os.Stdout
 	outCmd.Stderr = os.Stderr
@@ -16,7 +17,6 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	outCmd.Env = buildEnv(os.Environ(), env)
 
 	err := outCmd.Run()
-
 	if err != nil {
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) {
