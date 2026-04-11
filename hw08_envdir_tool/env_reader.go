@@ -6,10 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"unicode"
-
-	"github.com/samber/lo"
 )
 
 var (
@@ -40,7 +39,7 @@ func ReadDir(dir string) (Environment, error) {
 	envs := make(Environment, len(files))
 
 	for _, file := range files {
-		env, err := getEnv(dir + "/" + file)
+		env, err := getEnv(filepath.Join(dir, file))
 		if err != nil {
 			return nil, err
 		}
@@ -54,9 +53,13 @@ func getFolderFiles(path string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return lo.Map(entries, func(entry os.DirEntry, _ int) string {
-		return entry.Name()
-	}), nil
+	out := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			out = append(out, entry.Name())
+		}
+	}
+	return out, nil
 }
 
 func getEnv(filepath string) (*EnvVar, error) {
@@ -70,7 +73,7 @@ func getEnv(filepath string) (*EnvVar, error) {
 	}
 
 	if info.Size() == 0 {
-		return &EnvVar{processEnvValue(info.Name()), EnvValue{NeedRemove: true}}, nil
+		return &EnvVar{info.Name(), EnvValue{NeedRemove: true}}, nil
 	}
 
 	file, err := os.Open(filepath)
@@ -87,12 +90,12 @@ func getEnv(filepath string) (*EnvVar, error) {
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
-	return &EnvVar{processEnvValue(info.Name()), EnvValue{Value: firstLine}}, nil
+	return &EnvVar{info.Name(), EnvValue{Value: processEnvValue(firstLine)}}, nil
 }
 
 func processEnvValue(value string) string {
 	out := strings.TrimRightFunc(value, unicode.IsSpace)
-	return string(bytes.ReplaceAll([]byte(out), []byte{0x00}, []byte("\t")))
+	return string(bytes.ReplaceAll([]byte(out), []byte{0x00}, []byte("\n")))
 }
 
 func isValidEnvName(name string) bool {
