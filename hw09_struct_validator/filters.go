@@ -80,7 +80,7 @@ func regExpFilter(ruleValue string, value any) error {
 		pattern := ruleValue
 		re, err := regexp.Compile(pattern)
 		if err != nil {
-			return fmt.Errorf("%w: %s: %v", ErrInvalidRegexp, pattern, err)
+			return fmt.Errorf("%w: %s: %w", ErrInvalidRegexp, pattern, err)
 		}
 		if !re.MatchString(v) {
 			return fmt.Errorf("%w: %s", ErrInvalidRegexp, pattern)
@@ -102,11 +102,13 @@ func inFilter(ruleValue string, value any) error {
 		strValue = strconv.Itoa(v)
 	default:
 		rv := reflect.ValueOf(value)
-		if rv.Kind() == reflect.String {
+		//nolint:exhaustive
+		switch rv.Kind() {
+		case reflect.String:
 			strValue = rv.String()
-		} else if rv.Kind() == reflect.Int {
+		case reflect.Int:
 			strValue = strconv.FormatInt(rv.Int(), 10)
-		} else {
+		default:
 			return fmt.Errorf("invalid type for inFilter: %T", value)
 		}
 	}

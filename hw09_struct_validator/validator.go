@@ -26,7 +26,9 @@ type ValidationError struct {
 type ValidationErrors []ValidationError
 
 type ValidatorFunc func(name string, v any, filters []FilterFuncValuePair) ValidationErrors
+
 type typedValidator[T any] func(name string, v T, filters []FilterFuncValuePair) ValidationErrors
+
 type validatorsMap = map[string]ValidatorFunc
 
 type rule struct {
@@ -89,6 +91,7 @@ func Validate(v any) error {
 		typeName := field.Type.String()
 		validator, ok := validators[typeName]
 		if !ok {
+			//nolint:exhaustive
 			switch field.Type.Kind() {
 			case reflect.Int:
 				validator = validators["int"]
