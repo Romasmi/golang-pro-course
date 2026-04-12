@@ -9,7 +9,6 @@ import (
 var (
 	ErrNotStruct      = errors.New("not a struct")
 	ErrInvalidTag     = errors.New("invalid tag")
-	ErrUnknownFilter  = errors.New("unknown filter")
 	ErrInvalidRegexp  = errors.New("invalid regexp")
 	ErrLengthMismatch = errors.New("length mismatch")
 	ErrMinValue       = errors.New("less than min")
