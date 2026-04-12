@@ -10,7 +10,7 @@ import (
 	"unicode/utf8"
 )
 
-type FilterFunc func(string, interface{}) error
+type FilterFunc func(string, any) error
 
 type FilterFuncValuePair struct {
 	value  string
@@ -29,6 +29,8 @@ func getFilter(filterName string) (FilterFunc, error) {
 		return minFilter, nil
 	case "max":
 		return maxFilter, nil
+	case "type":
+		return typeFilter, nil
 	}
 	return nil, fmt.Errorf("unknown filter: %s", filterName)
 }
@@ -48,7 +50,7 @@ func rulesToFilters(rules []rule) ([]FilterFuncValuePair, error) {
 	return filters, nil
 }
 
-func lenFilter(ruleValue string, value interface{}) error {
+func lenFilter(ruleValue string, value any) error {
 	length, err := strconv.Atoi(ruleValue)
 	if err != nil || length < 0 {
 		return fmt.Errorf("%w: invalid length %s", ErrInvalidTag, ruleValue)
@@ -72,7 +74,7 @@ func lenFilter(ruleValue string, value interface{}) error {
 	return nil
 }
 
-func regExpFilter(ruleValue string, value interface{}) error {
+func regExpFilter(ruleValue string, value any) error {
 	switch v := value.(type) {
 	case string:
 		pattern := ruleValue
@@ -89,7 +91,7 @@ func regExpFilter(ruleValue string, value interface{}) error {
 	return nil
 }
 
-func inFilter(ruleValue string, value interface{}) error {
+func inFilter(ruleValue string, value any) error {
 	allowed := strings.Split(ruleValue, ",")
 
 	var strValue string
@@ -115,7 +117,7 @@ func inFilter(ruleValue string, value interface{}) error {
 	return nil
 }
 
-func minFilter(ruleValue string, value interface{}) error {
+func minFilter(ruleValue string, value any) error {
 	minV, err := strconv.Atoi(ruleValue)
 	if err != nil {
 		return fmt.Errorf("%w: invalid min %s", ErrInvalidTag, ruleValue)
@@ -140,7 +142,7 @@ func minFilter(ruleValue string, value interface{}) error {
 	return nil
 }
 
-func maxFilter(ruleValue string, value interface{}) error {
+func maxFilter(ruleValue string, value any) error {
 	maxV, err := strconv.Atoi(ruleValue)
 	if err != nil {
 		return fmt.Errorf("%w: invalid max %s", ErrInvalidTag, ruleValue)
@@ -161,6 +163,42 @@ func maxFilter(ruleValue string, value interface{}) error {
 
 	if intValue > maxV {
 		return fmt.Errorf("%w: expected max %d, got %d", ErrMaxValue, maxV, intValue)
+	}
+	return nil
+}
+
+const (
+	emailRegex = `^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`
+	uuidRegex  = `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`
+)
+
+var (
+	emailRe = regexp.MustCompile(emailRegex)
+	uuidRe  = regexp.MustCompile(uuidRegex)
+)
+
+func typeFilter(ruleValue string, value any) error {
+	strValue, ok := value.(string)
+	if !ok {
+		rv := reflect.ValueOf(value)
+		if rv.Kind() == reflect.String {
+			strValue = rv.String()
+		} else {
+			return fmt.Errorf("invalid type for typeFilter: %T", value)
+		}
+	}
+
+	switch ruleValue {
+	case "email":
+		if !emailRe.MatchString(strValue) {
+			return ErrInvalidEmail
+		}
+	case "uuid":
+		if !uuidRe.MatchString(strValue) {
+			return ErrInvalidUUID
+		}
+	default:
+		return fmt.Errorf("%w: unknown type %s", ErrInvalidTag, ruleValue)
 	}
 	return nil
 }

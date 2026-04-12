@@ -14,6 +14,8 @@ var (
 	ErrMinValue       = errors.New("less than min")
 	ErrMaxValue       = errors.New("greater than max")
 	ErrNotInList      = errors.New("not in list")
+	ErrInvalidEmail   = errors.New("invalid email")
+	ErrInvalidUUID    = errors.New("invalid uuid")
 )
 
 type ValidationError struct {

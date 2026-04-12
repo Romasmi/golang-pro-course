@@ -20,6 +20,11 @@ type (
 		meta   json.RawMessage //nolint:unused
 	}
 
+	Account struct {
+		ID    string `validate:"type:uuid"`
+		Email string `validate:"type:email"`
+	}
+
 	App struct {
 		Version string `validate:"len:5"`
 	}
@@ -87,6 +92,53 @@ func TestValidate(t *testing.T) {
 				Role:  "admin",
 			},
 			expectedErr: ErrInvalidRegexp,
+		},
+		{
+			name: "invalid email type",
+			in: Account{
+				ID:    "3c255929-3f89-4d4d-b10a-444c499d1a9b",
+				Email: "invalid-email",
+			},
+			expectedErr: ErrInvalidEmail,
+		},
+		{
+			name: "invalid uuid type",
+			in: Account{
+				ID:    "invalid-uuid",
+				Email: "test@example.com",
+			},
+			expectedErr: ErrInvalidUUID,
+		},
+		{
+			name: "valid account",
+			in: Account{
+				ID:    "3c255929-3f89-4d4d-b10a-444c499d1a9b",
+				Email: "test@example.com",
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "valid app",
+			in: App{
+				Version: "1.2.3",
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "invalid app version",
+			in: App{
+				Version: "1.2",
+			},
+			expectedErr: ErrLengthMismatch,
+		},
+		{
+			name: "token without tags",
+			in: Token{
+				Header:    []byte("h"),
+				Payload:   []byte("p"),
+				Signature: []byte("s"),
+			},
+			expectedErr: nil,
 		},
 		{
 			name: "invalid role in",
