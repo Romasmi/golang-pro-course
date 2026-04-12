@@ -1,6 +1,7 @@
 package hw09structvalidator
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 )
@@ -16,18 +17,22 @@ type validator[T any] = func(v T, rules string) ValidationErrors
 type validatorsMap = map[string]validator[any]
 
 func (v ValidationErrors) Error() string {
-	panic("implement me")
+	return errors.Join(v).Error()
 }
 
-func Validate(v interface{}) error {
+func ErrToValidationErrors(err error) ValidationErrors {
+	return ValidationErrors{ValidationError{Err: err}}
+}
+
+func Validate(v interface{}) ValidationErrors {
 	val := reflect.ValueOf(v)
 	if val.Kind() != reflect.Struct {
-		return fmt.Errorf("invalid type: %T", v)
+		return ErrToValidationErrors(fmt.Errorf("invalid type: %T", v))
 	}
-	// get all fields of struct via reflection
-	fields := val.Type().NumField()
+
 	validators := getValidator()
-	for i := 0; i < fields; i++ {
+	allErrors := make(ValidationErrors, 0)
+	for i := 0; i < val.Type().NumField(); i++ {
 		field := val.Type().Field(i)
 		typeName := field.Type.Name()
 		validator, ok := validators[typeName]
@@ -39,9 +44,9 @@ func Validate(v interface{}) error {
 			continue
 		}
 		fieldValue := val.Field(i)
-		_ = validator(fieldValue.Interface(), validationRules)
+		allErrors = append(allErrors, validator(fieldValue.Interface(), validationRules)...)
 	}
-	return nil
+	return allErrors
 }
 
 func getValidator() validatorsMap {
