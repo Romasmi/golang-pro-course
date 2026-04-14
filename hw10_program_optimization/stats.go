@@ -1,11 +1,11 @@
 package hw10programoptimization
 
 import (
-	"encoding/json"
-	"fmt"
+	"bufio"
 	"io"
-	"regexp"
 	"strings"
+
+	"github.com/Romasmi/golang-pro-course/hw10_program_optimization/user_parser"
 )
 
 type User struct {
@@ -21,46 +21,43 @@ type User struct {
 type DomainStat map[string]int
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	u, err := getUsers(r)
-	if err != nil {
-		return nil, fmt.Errorf("get users error: %w", err)
-	}
-	return countDomains(u, domain)
+	return countDomainInUserData(r, domain)
 }
 
-type users [100_000]User
-
-func getUsers(r io.Reader) (result users, err error) {
-	content, err := io.ReadAll(r)
-	if err != nil {
-		return
-	}
-
-	lines := strings.Split(string(content), "\n")
-	for i, line := range lines {
-		var user User
-		if err = json.Unmarshal([]byte(line), &user); err != nil {
-			return
-		}
-		result[i] = user
-	}
-	return
-}
-
-func countDomains(u users, domain string) (DomainStat, error) {
+func countDomainInUserData(r io.Reader, zone string) (DomainStat, error) {
 	result := make(DomainStat)
-
-	for _, user := range u {
-		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		user, err := user_parser.UnmarshalUser(scanner.Bytes())
 		if err != nil {
 			return nil, err
 		}
-
-		if matched {
-			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
-			num++
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
+		if domain, ok := getDomainInZone(user.Email, zone); ok {
+			result[domain]++
 		}
 	}
 	return result, nil
+}
+
+func getDomainInZone(email, target string) (string, bool) {
+	i := strings.IndexByte(email, '@')
+	if i == -1 || i+1 >= len(email) {
+		return "", false
+	}
+
+	domain := email[i+1:]
+
+	if domain == target {
+		return strings.ToLower(domain), true
+	}
+
+	for j := 0; j < len(domain); j++ {
+		if domain[j] == '.' && j+1 < len(domain) {
+			if domain[j+1:] == target {
+				return strings.ToLower(domain), true
+			}
+		}
+	}
+
+	return "", false
 }
