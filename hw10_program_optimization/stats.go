@@ -5,8 +5,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/Romasmi/golang-pro-course/hw10_program_optimization/user"
-	"github.com/mailru/easyjson"
+	"github.com/Romasmi/golang-pro-course/hw10_program_optimization/user" //nolint:depguard
+	"github.com/mailru/easyjson"                                          //nolint:depguard
 )
 
 type DomainStat map[string]int
