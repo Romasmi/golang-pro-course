@@ -4,16 +4,13 @@ import (
 	"bufio"
 	"io"
 	"strings"
+
+	"github.com/tidwall/gjson"
 )
 
+//go:generate easyjson -all user.go
 type User struct {
-	ID       int
-	Name     string
-	Username string
-	Email    string
-	Phone    string
-	Password string
-	Address  string
+	Email string
 }
 
 type DomainStat map[string]int
@@ -26,7 +23,7 @@ func countDomainInUserData(r io.Reader, zone string) (DomainStat, error) {
 	result := make(DomainStat)
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		email := extractEmail(string(scanner.Bytes()))
+		email := ExtractEmail(string(scanner.Bytes()))
 		if domain, ok := getDomainInZone(email, zone); ok {
 			result[domain]++
 		}
@@ -57,19 +54,6 @@ func getDomainInZone(email, target string) (string, bool) {
 	return "", false
 }
 
-func extractEmail(s string) string {
-	key := `"Email":"`
-	for i := 0; i <= len(s)-len(key); i++ {
-		if s[i] == '"' && s[i:i+len(key)] == key {
-			start := i + len(key)
-
-			for j := start; j < len(s); j++ {
-				if s[j] == '"' {
-					return s[start:j]
-				}
-			}
-			return ""
-		}
-	}
-	return ""
+func ExtractEmail(json string) string {
+	return gjson.Get(json, "Email").String()
 }
