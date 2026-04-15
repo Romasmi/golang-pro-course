@@ -5,13 +5,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/tidwall/gjson"
+	"github.com/Romasmi/golang-pro-course/hw10_program_optimization/user"
+	"github.com/mailru/easyjson"
 )
-
-//go:generate easyjson -all user.go
-type User struct {
-	Email string
-}
 
 type DomainStat map[string]int
 
@@ -23,8 +19,11 @@ func countDomainInUserData(r io.Reader, zone string) (DomainStat, error) {
 	result := make(DomainStat)
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		email := ExtractEmail(string(scanner.Bytes()))
-		if domain, ok := getDomainInZone(email, zone); ok {
+		var u user.User
+		if err := easyjson.Unmarshal(scanner.Bytes(), &u); err != nil {
+			panic(err)
+		}
+		if domain, ok := getDomainInZone(u.Email, zone); ok {
 			result[domain]++
 		}
 	}
@@ -52,8 +51,4 @@ func getDomainInZone(email, target string) (string, bool) {
 	}
 
 	return "", false
-}
-
-func ExtractEmail(json string) string {
-	return gjson.Get(json, "Email").String()
 }
