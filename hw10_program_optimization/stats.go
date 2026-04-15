@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"io"
 	"strings"
-
-	"github.com/Romasmi/golang-pro-course/hw10_program_optimization/user_parser"
 )
 
 type User struct {
@@ -28,11 +26,8 @@ func countDomainInUserData(r io.Reader, zone string) (DomainStat, error) {
 	result := make(DomainStat)
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		user, err := user_parser.UnmarshalUser(scanner.Bytes())
-		if err != nil {
-			return nil, err
-		}
-		if domain, ok := getDomainInZone(user.Email, zone); ok {
+		email := extractEmail(string(scanner.Bytes()))
+		if domain, ok := getDomainInZone(email, zone); ok {
 			result[domain]++
 		}
 	}
@@ -60,4 +55,21 @@ func getDomainInZone(email, target string) (string, bool) {
 	}
 
 	return "", false
+}
+
+func extractEmail(s string) string {
+	key := `"Email":"`
+	for i := 0; i <= len(s)-len(key); i++ {
+		if s[i] == '"' && s[i:i+len(key)] == key {
+			start := i + len(key)
+
+			for j := start; j < len(s); j++ {
+				if s[j] == '"' {
+					return s[start:j]
+				}
+			}
+			return ""
+		}
+	}
+	return ""
 }
