@@ -25,12 +25,12 @@ type cliArgs struct {
 func main() {
 	args, err := getCliArgs()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	if err := run(args); err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
@@ -46,6 +46,8 @@ func run(args *cliArgs) error {
 		return err
 	}
 	defer client.Close()
+
+	fmt.Fprintf(os.Stderr, "...Connected to %s\n", address)
 
 	type result struct {
 		source string
@@ -69,9 +71,9 @@ func run(args *cliArgs) error {
 			return res.err
 		}
 		if res.source == "send" {
-			fmt.Println("EOF")
+			fmt.Fprintln(os.Stderr, "...EOF")
 		} else {
-			fmt.Println("Connection was closed by peer")
+			fmt.Fprintln(os.Stderr, "...Connection was closed by peer")
 		}
 	}
 	return nil
@@ -90,7 +92,7 @@ func getCliArgs() (*cliArgs, error) {
 	if err := validator.ValidateHost(host); err != nil {
 		return nil, err
 	}
-	// get port
+
 	port, err := strconv.Atoi(args[1])
 	if err != nil {
 		return nil, err
