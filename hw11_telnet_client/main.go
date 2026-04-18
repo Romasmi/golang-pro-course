@@ -1,10 +1,16 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"net"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/Romasmi/golang-pro-course/hw11_telnet_client/internal/validator"
@@ -20,17 +26,55 @@ func main() {
 	args, err := getCliArgs()
 	if err != nil {
 		fmt.Println(err)
-		return
+		os.Exit(1)
 	}
 
-	client := NewTelnetClient(fmt.Sprintf("%s:%d", args.host, args.port), *args.timeout, os.Stdin, os.Stdout)
-	defer client.Close()
-	err = client.Connect()
-	if err != nil {
+	if err := run(args); err != nil {
 		fmt.Println(err)
-		return
+		os.Exit(1)
 	}
-	fmt.Println(args)
+}
+
+func run(args *cliArgs) error {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	address := net.JoinHostPort(args.host, strconv.Itoa(args.port))
+	client := NewTelnetClient(address, *args.timeout, os.Stdin, os.Stdout)
+
+	if err := client.Connect(); err != nil {
+		return err
+	}
+	defer client.Close()
+
+	type result struct {
+		source string
+		err    error
+	}
+	resCh := make(chan result, 2)
+
+	go func() {
+		resCh <- result{source: "send", err: client.Send()}
+	}()
+
+	go func() {
+		resCh <- result{source: "receive", err: client.Receive()}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil
+	case res := <-resCh:
+		if res.err != nil && !errors.Is(res.err, io.EOF) && !errors.Is(res.err, net.ErrClosed) {
+			return res.err
+		}
+		if res.source == "send" {
+			fmt.Println("EOF")
+		} else {
+			fmt.Println("Connection was closed by peer")
+		}
+	}
+	return nil
 }
 
 func getCliArgs() (*cliArgs, error) {
