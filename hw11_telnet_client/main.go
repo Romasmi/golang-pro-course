@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Romasmi/golang-pro-course/hw11_telnet_client/internal/validator"
+	"github.com/Romasmi/golang-pro-course/hw11_telnet_client/internal/validator" //nolint:depguard
 )
 
 type cliArgs struct {
