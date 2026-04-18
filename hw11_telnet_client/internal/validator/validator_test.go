@@ -50,24 +50,19 @@ func TestValidateHost(t *testing.T) {
 func TestValidatePort(t *testing.T) {
 	tests := []struct {
 		name    string
-		port    string
+		port    int
 		wantErr bool
 	}{
-		{name: "min port", port: "1", wantErr: false},
-		{name: "max port", port: "65535", wantErr: false},
-		{name: "common HTTP", port: "80", wantErr: false},
-		{name: "common HTTPS", port: "443", wantErr: false},
-		{name: "common app port", port: "8080", wantErr: false},
+		{name: "min port", port: 1, wantErr: false},
+		{name: "max port", port: 65535, wantErr: false},
+		{name: "common HTTP", port: 80, wantErr: false},
+		{name: "common HTTPS", port: 443, wantErr: false},
+		{name: "common app port", port: 8080, wantErr: false},
 
-		{name: "port zero", port: "0", wantErr: true},
-		{name: "port above max", port: "65536", wantErr: true},
-		{name: "negative port", port: "-1", wantErr: true},
-		{name: "large number", port: "99999", wantErr: true},
-
-		{name: "empty string", port: "", wantErr: true},
-		{name: "letters", port: "abc", wantErr: true},
-		{name: "port with space", port: "80 ", wantErr: true},
-		{name: "float", port: "80.5", wantErr: true},
+		{name: "port zero", port: 0, wantErr: true},
+		{name: "port above max", port: 65536, wantErr: true},
+		{name: "negative port", port: -1, wantErr: true},
+		{name: "large number", port: 99999, wantErr: true},
 	}
 
 	for _, tt := range tests {
