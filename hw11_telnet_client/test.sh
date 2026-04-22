@@ -3,11 +3,25 @@ set -xeuo pipefail
 
 go build -o go-telnet
 
-(echo -e "Hello\nFrom\nNC\n" && cat 2>/dev/null) | nc -l localhost 4242 >/tmp/nc.out &
+(
+  cat <<EOF
+Hello
+From
+NC
+EOF
+  sleep 5
+) | nc -l localhost 4242 >/tmp/nc.out &
 NC_PID=$!
 
 sleep 1
-(echo -e "I\nam\nTELNET client\n" && cat 2>/dev/null) | ./go-telnet --timeout=5s localhost 4242 >/tmp/telnet.out &
+(
+  cat <<EOF
+I
+am
+TELNET client
+EOF
+  sleep 5
+) | ./go-telnet --timeout=5s localhost 4242 >/tmp/telnet.out &
 TL_PID=$!
 
 sleep 5
@@ -17,7 +31,10 @@ kill ${NC_PID} 2>/dev/null || true
 function fileEquals() {
   local fileData
   fileData=$(cat "$1")
-  [ "${fileData}" = "${2}" ] || (echo -e "unexpected output, $1:\n${fileData}" && exit 1)
+  if [ "${fileData}" != "${2}" ]; then
+    printf "unexpected output, %s:\n%s\n" "$1" "${fileData}"
+    exit 1
+  fi
 }
 
 expected_nc_out='I
