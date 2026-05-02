@@ -57,11 +57,9 @@ version: build
 test:
 	go test -race ./internal/...
 
-install-lint-deps:
-	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.57.2
-
-lint: install-lint-deps
-	golangci-lint run ./...
+lint:
+	go mod download
+	go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5 run ./...
 
 migration:
 	go run github.com/pressly/goose/v3/cmd/goose@latest -dir migrations create $(NAME) sql

@@ -10,7 +10,7 @@ import (
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/domain"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // postgres driver
-	"github.com/pressly/goose/v3"
+	goose "github.com/pressly/goose/v3"
 )
 
 type Storage struct {
