@@ -1,3 +1,15 @@
-module github.com/fixme_my_friend/hw12_13_14_15_calendar
+module github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar
 
 go 1.23
+
+require (
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/lib/pq v1.12.3
+	github.com/stretchr/testify v1.11.1
+	gopkg.in/yaml.v3 v3.0.1
+)
+
+require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+)

@@ -3,21 +3,24 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/app"
+	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/domain"
+	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "configs/config.yaml", "Path to configuration file")
 }
 
 func main() {
@@ -28,13 +31,39 @@ func main() {
 		return
 	}
 
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+}
 
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
+func run() error {
+	config, err := NewConfig(configFile)
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
 
-	server := internalhttp.NewServer(logg, calendar)
+	logService := logger.New(config.Logger.Level)
+
+	var st domain.EventRepository
+	switch config.Storage.Type {
+	case "memory":
+		st = memorystorage.New()
+	case "sql":
+		s := sqlstorage.New()
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := s.Connect(ctx, config.Storage.DSN); err != nil {
+			return fmt.Errorf("failed to connect to sql storage: %w", err)
+		}
+		st = s
+	default:
+		return fmt.Errorf("unknown storage type: %s", config.Storage.Type)
+	}
+
+	calendar := app.New(logService, st)
+
+	server := internalhttp.NewServer(logService, calendar, config.HTTP.Host, config.HTTP.Port)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -43,19 +72,19 @@ func main() {
 	go func() {
 		<-ctx.Done()
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-		defer cancel()
+		stopCtx, stopCancel := context.WithTimeout(context.Background(), time.Second*3)
+		defer stopCancel()
 
-		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+		if err := server.Stop(stopCtx); err != nil {
+			logService.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	logService.Info("calendar is running...")
 
 	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
+		return fmt.Errorf("failed to start http server: %w", err)
 	}
+
+	return nil
 }
