@@ -18,8 +18,9 @@ type LoggerConf struct {
 }
 
 type StorageConf struct {
-	Type string `yaml:"type"`
-	DSN  string `yaml:"dsn"`
+	Type          string `yaml:"type"`
+	DSN           string `yaml:"dsn"`
+	MigrationsDir string `yaml:"migrationsDir"`
 }
 
 type HTTPConf struct {

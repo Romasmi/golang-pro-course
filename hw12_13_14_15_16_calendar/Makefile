@@ -63,4 +63,7 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint run ./...
 
-.PHONY: build run build-img run-img version test lint
+migration:
+	go run github.com/pressly/goose/v3/cmd/goose@latest -dir migrations create $(NAME) sql
+
+.PHONY: build run build-img run-img version test lint migration

@@ -5,11 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
+	"os"
 
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/domain"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // postgres driver
+	"github.com/pressly/goose/v3"
 )
 
 type Storage struct {
@@ -36,13 +37,28 @@ func (s *Storage) Close(_ context.Context) error {
 	return nil
 }
 
-func (s *Storage) AddEvent(ctx context.Context, event domain.Event) error {
-	now := time.Now()
-	event.CreatedAt = now
-	event.UpdatedAt = now
+func (s *Storage) Migrate(ctx context.Context, migrationsDir string) error {
+	if migrationsDir == "" {
+		return nil
+	}
+	if _, err := os.Stat(migrationsDir); os.IsNotExist(err) {
+		return fmt.Errorf("migrations directory does not exist: %s", migrationsDir)
+	}
 
-	query := `INSERT INTO events (id, title, description, start_time, end_time, user_id, created_at, updated_at) 
-              VALUES (:id, :title, :description, :start_time, :end_time, :user_id, :created_at, :updated_at)`
+	if err := goose.SetDialect("postgres"); err != nil {
+		return fmt.Errorf("failed to set goose dialect: %w", err)
+	}
+
+	if err := goose.UpContext(ctx, s.db.DB, migrationsDir); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Storage) AddEvent(ctx context.Context, event domain.Event) error {
+	query := `INSERT INTO events (id, title, description, start_at, end_at, user_id) 
+              VALUES (:id, :title, :description, :start_at, :end_at, :user_id)`
 	_, err := s.db.NamedExecContext(ctx, query, event)
 	if err != nil {
 		return fmt.Errorf("failed to add event: %w", err)
@@ -51,10 +67,8 @@ func (s *Storage) AddEvent(ctx context.Context, event domain.Event) error {
 }
 
 func (s *Storage) UpdateEvent(ctx context.Context, event domain.Event) error {
-	event.UpdatedAt = time.Now()
-
-	query := `UPDATE events SET title=:title, description=:description, start_time=:start_time, 
-              end_time=:end_time, user_id=:user_id, updated_at=:updated_at WHERE id=:id`
+	query := `UPDATE events SET title=:title, description=:description, start_at=:start_at, 
+              end_at=:end_at, user_id=:user_id, updated_at=NOW() WHERE id=:id`
 	res, err := s.db.NamedExecContext(ctx, query, event)
 	if err != nil {
 		return fmt.Errorf("failed to update event: %w", err)
@@ -87,7 +101,7 @@ func (s *Storage) DeleteEvent(ctx context.Context, id string) error {
 
 func (s *Storage) GetEventByID(ctx context.Context, id string) (domain.Event, error) {
 	var event domain.Event
-	query := `SELECT id, title, description, start_time, end_time, user_id, created_at, updated_at FROM events WHERE id=$1`
+	query := `SELECT id, title, description, start_at, end_at, user_id, created_at, updated_at FROM events WHERE id=$1`
 	err := s.db.GetContext(ctx, &event, query, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -100,7 +114,7 @@ func (s *Storage) GetEventByID(ctx context.Context, id string) (domain.Event, er
 
 func (s *Storage) ListEvents(ctx context.Context) ([]domain.Event, error) {
 	var events []domain.Event
-	query := `SELECT id, title, description, start_time, end_time, user_id, created_at, updated_at FROM events`
+	query := `SELECT id, title, description, start_at, end_at, user_id, created_at, updated_at FROM events`
 	err := s.db.SelectContext(ctx, &events, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list events: %w", err)

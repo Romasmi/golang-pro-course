@@ -3,6 +3,7 @@ logger:
 storage:
   type: "memory"
   dsn: "postgres://user:password@localhost:5432/calendar?sslmode=disable"
+  migrationsDir: "migrations"
 http:
   host: "0.0.0.0"
   port: "8080"
