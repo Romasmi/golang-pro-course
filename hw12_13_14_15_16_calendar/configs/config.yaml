@@ -1,8 +1,8 @@
 logger:
   level: "info"
 storage:
-  type: "memory"
-  dsn: "postgres://user:password@localhost:5432/calendar?sslmode=disable"
+  type: "sql"
+  dsn: "postgres://postgres:password@localhost:5435/backend?sslmode=disable"
   migrationsDir: "migrations"
 http:
   host: "0.0.0.0"
