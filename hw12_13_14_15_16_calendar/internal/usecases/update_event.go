@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/domain"
-	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/services/event_service"
+	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/services/eventservice"
 )
 
 type UpdateEventUsecase struct {
-	Service *event_service.CalendarService
+	Service *eventservice.CalendarService
 }
 
 func (u *UpdateEventUsecase) Do(ctx context.Context, req any) (any, error) {

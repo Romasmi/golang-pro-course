@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/domain"
-	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/services/event_service"
+	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/services/eventservice"
 	memorystorage "github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/storage/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,12 +14,12 @@ import (
 
 type mockLogger struct{}
 
-func (m *mockLogger) Info(msg string)  {}
-func (m *mockLogger) Error(msg string) {}
+func (m *mockLogger) Info(_ string)  {}
+func (m *mockLogger) Error(_ string) {}
 
 func TestListEventsByIntervalUsecase_Do(t *testing.T) {
 	st := memorystorage.New()
-	svc := event_service.New(&mockLogger{}, st)
+	svc := eventservice.New(&mockLogger{}, st)
 	uc := &ListEventsByIntervalUsecase{Service: svc}
 	ctx := context.Background()
 

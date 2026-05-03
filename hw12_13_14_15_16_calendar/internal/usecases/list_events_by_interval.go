@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/services/event_service"
+	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/services/eventservice"
 )
 
 type Interval string
@@ -24,7 +24,7 @@ type ListEventsByIntervalRequest struct {
 }
 
 type ListEventsByIntervalUsecase struct {
-	Service *event_service.CalendarService
+	Service *eventservice.CalendarService
 }
 
 func (i Interval) IsValid() bool {
@@ -48,6 +48,8 @@ func (u *ListEventsByIntervalUsecase) Do(ctx context.Context, req any) (any, err
 	case Year:
 		from = time.Date(r.Date.Year(), 1, 1, 0, 0, 0, 0, r.Date.Location())
 		to = from.AddDate(1, 0, 0)
+	case InvalidInterval:
+		return nil, fmt.Errorf("invalid interval: %s", r.Interval)
 	default:
 		return nil, fmt.Errorf("unknown interval: %s", r.Interval)
 	}

@@ -57,6 +57,9 @@ version: build
 test:
 	go test -race ./internal/...
 
+api-test:
+	go test -v ./internal/server/http/...
+
 lint:
 	go mod download
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5 run ./...
@@ -74,4 +77,4 @@ generate:
 		--openapiv2_out=pkg/api --openapiv2_opt=logtostderr=true \
 		api/EventService.proto
 
-.PHONY: build run build-img run-img version test lint migration generate
+.PHONY: build run build-img run-img version test api-test lint migration generate

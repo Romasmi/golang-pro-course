@@ -67,29 +67,29 @@ message HelloResponse {
 service EventService {
     rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse) {
         option (google.api.http) = {
-            post: "/v1/events"
+            post: "/events"
             body: "event"
         };
     }
     rpc UpdateEvent(UpdateEventRequest) returns (UpdateEventResponse) {
         option (google.api.http) = {
-            put: "/v1/events/{event.id}"
+            put: "/events/{event.id}"
             body: "event"
         };
     }
     rpc GetEvent(GetEventRequest) returns (GetEventResponse) {
         option (google.api.http) = {
-            get: "/v1/events/{id}"
+            get: "/events/{id}"
         };
     }
     rpc ListEvents(ListEventsRequest) returns (ListEventsResponse) {
         option (google.api.http) = {
-            get: "/v1/events"
+            get: "/events"
         };
     }
     rpc ListEventsByInterval(ListEventsByIntervalRequest) returns (ListEventsResponse) {
         option (google.api.http) = {
-            get: "/v1/events/interval/{interval}"
+            get: "/events/interval/{interval}"
         };
     }
     rpc Hello(HelloRequest) returns (HelloResponse) {

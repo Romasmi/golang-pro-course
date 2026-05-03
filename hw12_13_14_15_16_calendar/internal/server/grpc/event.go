@@ -38,7 +38,7 @@ func (s *Server) GetEvent(ctx context.Context, req *api.GetEventRequest) (*api.G
 	return &api.GetEventResponse{Event: domainToProto(res.(domain.Event))}, nil
 }
 
-func (s *Server) ListEvents(ctx context.Context, req *api.ListEventsRequest) (*api.ListEventsResponse, error) {
+func (s *Server) ListEvents(ctx context.Context, _ *api.ListEventsRequest) (*api.ListEventsResponse, error) {
 	uc := s.usecases[usecases.ListEvents]
 	res, err := uc.Do(ctx, nil)
 	if err != nil {
@@ -47,7 +47,10 @@ func (s *Server) ListEvents(ctx context.Context, req *api.ListEventsRequest) (*a
 	return &api.ListEventsResponse{Events: domainToProtoSlice(res.([]domain.Event))}, nil
 }
 
-func (s *Server) ListEventsByInterval(ctx context.Context, req *api.ListEventsByIntervalRequest) (*api.ListEventsResponse, error) {
+func (s *Server) ListEventsByInterval(
+	ctx context.Context,
+	req *api.ListEventsByIntervalRequest,
+) (*api.ListEventsResponse, error) {
 	uc := s.usecases[usecases.ListEventsByInterval]
 
 	interval := convert.IntervalFromProto(req.Interval)
@@ -67,7 +70,7 @@ func (s *Server) ListEventsByInterval(ctx context.Context, req *api.ListEventsBy
 	return &api.ListEventsResponse{Events: domainToProtoSlice(res.([]domain.Event))}, nil
 }
 
-func (s *Server) Hello(ctx context.Context, req *api.HelloRequest) (*api.HelloResponse, error) {
+func (s *Server) Hello(ctx context.Context, _ *api.HelloRequest) (*api.HelloResponse, error) {
 	uc := s.usecases[usecases.Hello]
 	res, err := uc.Do(ctx, nil)
 	if err != nil {

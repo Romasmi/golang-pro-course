@@ -257,7 +257,7 @@ func RegisterEventServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/event.EventService/CreateEvent", runtime.WithHTTPPathPattern("/v1/events"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/event.EventService/CreateEvent", runtime.WithHTTPPathPattern("/events"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -277,7 +277,7 @@ func RegisterEventServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/event.EventService/UpdateEvent", runtime.WithHTTPPathPattern("/v1/events/{event.id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/event.EventService/UpdateEvent", runtime.WithHTTPPathPattern("/events/{event.id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -297,7 +297,7 @@ func RegisterEventServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/event.EventService/GetEvent", runtime.WithHTTPPathPattern("/v1/events/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/event.EventService/GetEvent", runtime.WithHTTPPathPattern("/events/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -317,7 +317,7 @@ func RegisterEventServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/event.EventService/ListEvents", runtime.WithHTTPPathPattern("/v1/events"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/event.EventService/ListEvents", runtime.WithHTTPPathPattern("/events"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -337,7 +337,7 @@ func RegisterEventServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/event.EventService/ListEventsByInterval", runtime.WithHTTPPathPattern("/v1/events/interval/{interval}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/event.EventService/ListEventsByInterval", runtime.WithHTTPPathPattern("/events/interval/{interval}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -415,7 +415,7 @@ func RegisterEventServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/event.EventService/CreateEvent", runtime.WithHTTPPathPattern("/v1/events"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/event.EventService/CreateEvent", runtime.WithHTTPPathPattern("/events"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -432,7 +432,7 @@ func RegisterEventServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/event.EventService/UpdateEvent", runtime.WithHTTPPathPattern("/v1/events/{event.id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/event.EventService/UpdateEvent", runtime.WithHTTPPathPattern("/events/{event.id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -449,7 +449,7 @@ func RegisterEventServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/event.EventService/GetEvent", runtime.WithHTTPPathPattern("/v1/events/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/event.EventService/GetEvent", runtime.WithHTTPPathPattern("/events/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -466,7 +466,7 @@ func RegisterEventServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/event.EventService/ListEvents", runtime.WithHTTPPathPattern("/v1/events"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/event.EventService/ListEvents", runtime.WithHTTPPathPattern("/events"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -483,7 +483,7 @@ func RegisterEventServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/event.EventService/ListEventsByInterval", runtime.WithHTTPPathPattern("/v1/events/interval/{interval}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/event.EventService/ListEventsByInterval", runtime.WithHTTPPathPattern("/events/interval/{interval}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -517,11 +517,11 @@ func RegisterEventServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 }
 
 var (
-	pattern_EventService_CreateEvent_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "events"}, ""))
-	pattern_EventService_UpdateEvent_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "events", "event.id"}, ""))
-	pattern_EventService_GetEvent_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "events", "id"}, ""))
-	pattern_EventService_ListEvents_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "events"}, ""))
-	pattern_EventService_ListEventsByInterval_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 2}, []string{"v1", "events", "interval"}, ""))
+	pattern_EventService_CreateEvent_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"events"}, ""))
+	pattern_EventService_UpdateEvent_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"events", "event.id"}, ""))
+	pattern_EventService_GetEvent_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"events", "id"}, ""))
+	pattern_EventService_ListEvents_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"events"}, ""))
+	pattern_EventService_ListEventsByInterval_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 1}, []string{"events", "interval"}, ""))
 	pattern_EventService_Hello_0                = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"hello"}, ""))
 )
 

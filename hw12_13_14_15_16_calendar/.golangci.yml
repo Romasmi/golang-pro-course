@@ -21,6 +21,11 @@ linters-settings:
           - github.com/lib/pq
           - gopkg.in/yaml.v3
           - github.com/pressly/goose/v3
+          - github.com/google/uuid
+          - github.com/grpc-ecosystem/grpc-gateway/v2/runtime
+          - google.golang.org/grpc
+          - google.golang.org/protobuf
+          - google.golang.org/genproto
       Test:
         files:
           - $test
@@ -28,6 +33,7 @@ linters-settings:
           - $gostd
           - github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar
           - github.com/stretchr/testify
+          - github.com/grpc-ecosystem/grpc-gateway/v2/runtime
   tagliatelle:
     case:
       yaml: snake

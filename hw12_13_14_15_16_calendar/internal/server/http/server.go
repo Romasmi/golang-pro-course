@@ -55,7 +55,7 @@ func NewServer(logger Logger, grpcAddr string, host, port string) *Server {
 	return s
 }
 
-func (s *Server) serveSwaggerUI(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveSwaggerUI(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	fmt.Fprint(w, swaggerUIHTML)
 }
