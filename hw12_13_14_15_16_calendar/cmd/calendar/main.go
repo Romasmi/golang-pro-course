@@ -9,12 +9,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/app"
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/domain"
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/logger"
+	grpcserver "github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/server/http"
+	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/services/event_service"
 	memorystorage "github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/usecases"
 )
 
 var configFile string
@@ -64,13 +66,24 @@ func run() error {
 		return fmt.Errorf("unknown storage type: %s", config.Storage.Type)
 	}
 
-	calendar := app.New(logService, st)
+	calendar := event_service.New(logService, st)
 
-	server := internalhttp.NewServer(logService, calendar, config.HTTP.Host, config.HTTP.Port)
+	ucs := usecases.NewUsecases(calendar)
+
+	grpcSrv := grpcserver.NewServer(logService, ucs)
+
+	grpcAddr := fmt.Sprintf("%s:%s", config.GRPC.Host, config.GRPC.Port)
+	httpSrv := internalhttp.NewServer(logService, grpcAddr, config.HTTP.Host, config.HTTP.Port)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
+
+	go func() {
+		if err := grpcSrv.Start(config.GRPC.Host, config.GRPC.Port); err != nil {
+			logService.Error("failed to start grpc server: " + err.Error())
+		}
+	}()
 
 	go func() {
 		<-ctx.Done()
@@ -78,14 +91,15 @@ func run() error {
 		stopCtx, stopCancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer stopCancel()
 
-		if err := server.Stop(stopCtx); err != nil {
+		if err := httpSrv.Stop(stopCtx); err != nil {
 			logService.Error("failed to stop http server: " + err.Error())
 		}
+		grpcSrv.Stop()
 	}()
 
 	logService.Info("calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
+	if err := httpSrv.Start(ctx); err != nil {
 		return fmt.Errorf("failed to start http server: %w", err)
 	}
 
