@@ -22,10 +22,16 @@ type Event struct {
 	UpdatedAt   time.Time `db:"updated_at"`
 }
 
+type EventFilter struct {
+	From time.Time
+	To   time.Time
+}
+
 type EventRepository interface {
 	AddEvent(ctx context.Context, event Event) error
 	UpdateEvent(ctx context.Context, event Event) error
 	DeleteEvent(ctx context.Context, id string) error
 	GetEventByID(ctx context.Context, id string) (Event, error)
 	ListEvents(ctx context.Context) ([]Event, error)
+	ListEventsWithFilter(ctx context.Context, filter EventFilter) ([]Event, error)
 }
