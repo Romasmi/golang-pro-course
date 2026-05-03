@@ -3,6 +3,7 @@ module github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar
 go 1.25.0
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.12.3

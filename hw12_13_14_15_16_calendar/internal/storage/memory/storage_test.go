@@ -62,17 +62,67 @@ func TestStorage(t *testing.T) {
 	})
 
 	t.Run("list events with filter", func(t *testing.T) {
-		from := event.StartAt.Add(-time.Hour)
-		to := event.StartAt.Add(time.Hour)
-		filter := domain.EventFilter{From: from, To: to}
-		events, err := s.ListEventsWithFilter(ctx, filter)
-		require.NoError(t, err)
-		require.Len(t, events, 1)
+		s := New()
+		t1 := time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC)
+		t2 := time.Date(2026, 5, 2, 10, 0, 0, 0, time.UTC)
+		t3 := time.Date(2026, 5, 3, 10, 0, 0, 0, time.UTC)
 
-		filter = domain.EventFilter{From: to, To: to.Add(time.Hour)}
-		events, err = s.ListEventsWithFilter(ctx, filter)
-		require.NoError(t, err)
-		require.Len(t, events, 0)
+		_ = s.AddEvent(ctx, domain.Event{ID: "1", Title: "E1", StartAt: t1})
+		_ = s.AddEvent(ctx, domain.Event{ID: "2", Title: "E2", StartAt: t2})
+		_ = s.AddEvent(ctx, domain.Event{ID: "3", Title: "E3", StartAt: t3})
+
+		tests := []struct {
+			name string
+			from time.Time
+			to   time.Time
+			want int
+		}{
+			{
+				name: "all events",
+				from: t1.Add(-time.Hour),
+				to:   t3.Add(time.Hour),
+				want: 3,
+			},
+			{
+				name: "first two",
+				from: t1.Add(-time.Hour),
+				to:   t2.Add(time.Hour),
+				want: 2,
+			},
+			{
+				name: "only second",
+				from: t2.Add(-time.Hour),
+				to:   t2.Add(time.Hour),
+				want: 1,
+			},
+			{
+				name: "none (before)",
+				from: t1.Add(-2 * time.Hour),
+				to:   t1.Add(-time.Hour),
+				want: 0,
+			},
+			{
+				name: "none (after)",
+				from: t3.Add(time.Hour),
+				to:   t3.Add(2 * time.Hour),
+				want: 0,
+			},
+			{
+				name: "boundary check [from, to)",
+				from: t1,
+				to:   t2,
+				want: 1, // only E1
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				filter := domain.EventFilter{From: tt.from, To: tt.to}
+				events, err := s.ListEventsWithFilter(ctx, filter)
+				require.NoError(t, err)
+				require.Len(t, events, tt.want)
+			})
+		}
 	})
 
 	t.Run("delete event", func(t *testing.T) {

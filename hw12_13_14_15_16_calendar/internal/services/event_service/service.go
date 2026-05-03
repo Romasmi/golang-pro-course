@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/domain"
+	"github.com/google/uuid"
 )
 
 type CalendarService struct {
@@ -25,9 +26,7 @@ func New(logger Logger, storage domain.EventRepository) *CalendarService {
 }
 
 func (s *CalendarService) CreateEvent(ctx context.Context, event domain.Event) (domain.Event, error) {
-	if event.ID == "" {
-		// In a real app we might generate UUID here if not provided
-	}
+	event.ID = uuid.New().String()
 	err := s.storage.AddEvent(ctx, event)
 	return event, err
 }

@@ -57,20 +57,48 @@ func (m *MockLogger) Error(msg string) {
 }
 
 func TestCalendarService_CreateEvent(t *testing.T) {
+	t.Parallel()
+
 	repo := new(MockRepository)
 	logger := new(MockLogger)
 	s := New(logger, repo)
 
-	event := domain.Event{ID: "1", Title: "Test"}
-	repo.On("AddEvent", mock.Anything, event).Return(nil)
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
 
-	res, err := s.CreateEvent(context.Background(), event)
+		event := domain.Event{Title: "Test"}
+		repo.On("AddEvent", mock.Anything, mock.MatchedBy(func(e domain.Event) bool {
+			return e.Title == "Test" && e.ID != ""
+		})).Return(nil).Once()
+
+		res, err := s.CreateEvent(context.Background(), event)
+		assert.NoError(t, err)
+		assert.Equal(t, "Test", res.Title)
+		assert.NotEmpty(t, res.ID)
+	})
+
+	repo.AssertExpectations(t)
+}
+
+func TestCalendarService_UpdateEvent(t *testing.T) {
+	t.Parallel()
+
+	repo := new(MockRepository)
+	logger := new(MockLogger)
+	s := New(logger, repo)
+
+	event := domain.Event{ID: "1", Title: "Updated"}
+	repo.On("UpdateEvent", mock.Anything, event).Return(nil)
+
+	res, err := s.UpdateEvent(context.Background(), event)
 	assert.NoError(t, err)
 	assert.Equal(t, event, res)
 	repo.AssertExpectations(t)
 }
 
 func TestCalendarService_GetEvent(t *testing.T) {
+	t.Parallel()
+
 	repo := new(MockRepository)
 	logger := new(MockLogger)
 	s := New(logger, repo)
@@ -84,15 +112,29 @@ func TestCalendarService_GetEvent(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
+func TestCalendarService_ListEvents(t *testing.T) {
+	repo := new(MockRepository)
+	logger := new(MockLogger)
+	s := New(logger, repo)
+
+	events := []domain.Event{{ID: "1", Title: "Test"}}
+	repo.On("ListEvents", mock.Anything).Return(events, nil)
+
+	res, err := s.ListEvents(context.Background())
+	assert.NoError(t, err)
+	assert.Equal(t, events, res)
+	repo.AssertExpectations(t)
+}
+
 func TestCalendarService_ListEventsByFilter(t *testing.T) {
 	repo := new(MockRepository)
 	logger := new(MockLogger)
 	s := New(logger, repo)
 
-	from := time.Now()
-	to := from.Add(time.Hour)
+	from := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
+	to := time.Date(2026, 5, 2, 0, 0, 0, 0, time.UTC)
 	filter := domain.EventFilter{From: from, To: to}
-	events := []domain.Event{{ID: "1", Title: "Test"}}
+	events := []domain.Event{{ID: "1", Title: "Test", StartAt: from.Add(time.Hour)}}
 
 	repo.On("ListEventsWithFilter", mock.Anything, filter).Return(events, nil)
 
