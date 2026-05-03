@@ -25,8 +25,8 @@ run-postgres:
 	-e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
 	-e POSTGRES_DB=$(POSTGRES_DB) \
 	-p $(POSTGRES_PORT):5432 \
-	-v postgres-data:/var/lib/postgresql/data \
-	postgres:latest
+	-v postgres-data-calendar:/var/lib/postgresql/data \
+	postgres:17
 
 run-rabbit:
 	docker run -d --name $(RABBIT_CONTAINER) \
@@ -40,7 +40,7 @@ build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
 run: build
-	$(BIN) -config ./configs/config.toml
+	$(BIN) -config ./configs/config.yaml
 
 build-img:
 	docker build \
@@ -55,12 +55,13 @@ version: build
 	$(BIN) version
 
 test:
-	go test -race ./internal/... ./pkg/...
+	go test -race ./internal/...
 
-install-lint-deps:
-	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.57.2
+lint:
+	go mod download
+	go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5 run ./...
 
-lint: install-lint-deps
-	golangci-lint run ./...
+migration:
+	go run github.com/pressly/goose/v3/cmd/goose@latest -dir migrations create $(NAME) sql
 
-.PHONY: build run build-img run-img version test lint
+.PHONY: build run build-img run-img version test lint migration
