@@ -121,3 +121,15 @@ func (s *Storage) ListEvents(ctx context.Context) ([]domain.Event, error) {
 	}
 	return events, nil
 }
+
+func (s *Storage) ListEventsWithFilter(ctx context.Context, filter domain.EventFilter) ([]domain.Event, error) {
+	var events []domain.Event
+	query := `SELECT id, title, description, start_at, end_at, user_id, created_at, updated_at 
+              FROM events 
+              WHERE start_at >= $1 AND start_at < $2`
+	err := s.db.SelectContext(ctx, &events, query, filter.From, filter.To)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list events with filter: %w", err)
+	}
+	return events, nil
+}

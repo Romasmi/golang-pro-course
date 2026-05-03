@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/domain"
 	"github.com/stretchr/testify/require"
@@ -58,6 +59,20 @@ func TestStorage(t *testing.T) {
 		events, err := s.ListEvents(ctx)
 		require.NoError(t, err)
 		require.Len(t, events, 1)
+	})
+
+	t.Run("list events with filter", func(t *testing.T) {
+		from := event.StartAt.Add(-time.Hour)
+		to := event.StartAt.Add(time.Hour)
+		filter := domain.EventFilter{From: from, To: to}
+		events, err := s.ListEventsWithFilter(ctx, filter)
+		require.NoError(t, err)
+		require.Len(t, events, 1)
+
+		filter = domain.EventFilter{From: to, To: to.Add(time.Hour)}
+		events, err = s.ListEventsWithFilter(ctx, filter)
+		require.NoError(t, err)
+		require.Len(t, events, 0)
 	})
 
 	t.Run("delete event", func(t *testing.T) {
