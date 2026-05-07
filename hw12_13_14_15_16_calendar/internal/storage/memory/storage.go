@@ -74,3 +74,15 @@ func (s *Storage) ListEvents(_ context.Context) ([]domain.Event, error) {
 	}
 	return res, nil
 }
+
+func (s *Storage) ListEventsWithFilter(_ context.Context, filter domain.EventFilter) ([]domain.Event, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	res := make([]domain.Event, 0)
+	for _, e := range s.events {
+		if (e.StartAt.After(filter.From) || e.StartAt.Equal(filter.From)) && e.StartAt.Before(filter.To) {
+			res = append(res, e)
+		}
+	}
+	return res, nil
+}

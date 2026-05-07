@@ -57,6 +57,9 @@ version: build
 test:
 	go test -race ./internal/...
 
+api-test:
+	go test -v ./internal/server/http/...
+
 lint:
 	go mod download
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5 run ./...
@@ -64,4 +67,14 @@ lint:
 migration:
 	go run github.com/pressly/goose/v3/cmd/goose@latest -dir migrations create $(NAME) sql
 
-.PHONY: build run build-img run-img version test lint migration
+generate:
+	mkdir -p pkg/api
+	protoc --proto_path=api \
+		--proto_path=internal/proto \
+		--go_out=pkg/api --go_opt=paths=source_relative \
+		--go-grpc_out=pkg/api --go-grpc_opt=paths=source_relative \
+		--grpc-gateway_out=pkg/api --grpc-gateway_opt=paths=source_relative \
+		--openapiv2_out=pkg/api --openapiv2_opt=logtostderr=true \
+		api/EventService.proto
+
+.PHONY: build run build-img run-img version test api-test lint migration generate

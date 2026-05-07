@@ -2,6 +2,99 @@ syntax = "proto3";
 
 package event;
 
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/pkg/api;api";
+
 message Event {
-    // TODO
+    string id = 1;
+    string title = 2;
+    string description = 3;
+    google.protobuf.Timestamp start_at = 4;
+    google.protobuf.Timestamp end_at = 5;
+    string user_id = 6;
+}
+
+message CreateEventRequest {
+    Event event = 1;
+}
+
+message CreateEventResponse {
+    Event event = 1;
+}
+
+message UpdateEventRequest {
+    Event event = 1;
+}
+
+message UpdateEventResponse {
+    Event event = 1;
+}
+
+message GetEventRequest {
+    string id = 1;
+}
+
+message GetEventResponse {
+    Event event = 1;
+}
+
+message ListEventsRequest {}
+
+message ListEventsResponse {
+    repeated Event events = 1;
+}
+
+enum Interval {
+    DAY = 0;
+    WEEK = 1;
+    MONTH = 2;
+    YEAR = 3;
+}
+
+message ListEventsByIntervalRequest {
+    google.protobuf.Timestamp date = 1;
+    Interval interval = 2;
+}
+
+message HelloRequest {}
+
+message HelloResponse {
+    string message = 1;
+}
+
+service EventService {
+    rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse) {
+        option (google.api.http) = {
+            post: "/events"
+            body: "event"
+        };
+    }
+    rpc UpdateEvent(UpdateEventRequest) returns (UpdateEventResponse) {
+        option (google.api.http) = {
+            put: "/events/{event.id}"
+            body: "event"
+        };
+    }
+    rpc GetEvent(GetEventRequest) returns (GetEventResponse) {
+        option (google.api.http) = {
+            get: "/events/{id}"
+        };
+    }
+    rpc ListEvents(ListEventsRequest) returns (ListEventsResponse) {
+        option (google.api.http) = {
+            get: "/events"
+        };
+    }
+    rpc ListEventsByInterval(ListEventsByIntervalRequest) returns (ListEventsResponse) {
+        option (google.api.http) = {
+            get: "/events/interval/{interval}"
+        };
+    }
+    rpc Hello(HelloRequest) returns (HelloResponse) {
+        option (google.api.http) = {
+            get: "/hello"
+        };
+    }
 }
