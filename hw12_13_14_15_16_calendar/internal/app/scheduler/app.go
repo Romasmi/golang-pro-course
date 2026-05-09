@@ -14,6 +14,32 @@ import (
 	sqlstorage "github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/storage/sql"
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/pkg/queue"
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/pkg/queue/rabbitmq"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+var (
+	schedulerScannedEventsTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "scheduler_scanned_events_total",
+		Help: "Total number of events scanned by scheduler.",
+	})
+
+	schedulerPublishedNotificationsTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "scheduler_published_notifications_total",
+		Help: "Total number of notifications published to queue.",
+	})
+
+	schedulerScanDuration = promauto.NewHistogram(prometheus.HistogramOpts{
+		Name:    "scheduler_scan_duration_seconds",
+		Help:    "Duration of event scanning process.",
+		Buckets: prometheus.DefBuckets,
+	})
+
+	schedulerErrorsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "scheduler_errors_total",
+		Help: "Total number of errors in scheduler.",
+	}, []string{"operation"})
 )
 
 type App struct {
@@ -59,6 +85,7 @@ func (a *App) Init(ctx context.Context) error {
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	mux.Handle("/metrics", promhttp.Handler())
 
 	a.httpServer = &http.Server{
 		Addr:              fmt.Sprintf("%s:%s", a.config.HTTP.Host, a.config.HTTP.Port),
@@ -114,11 +141,19 @@ func (a *App) Run(ctx context.Context) error {
 }
 
 func (a *App) scanEvents(ctx context.Context) {
+	start := time.Now()
+	defer func() {
+		schedulerScanDuration.Observe(time.Since(start).Seconds())
+	}()
+
 	events, err := a.service.GetEventsToNotify(ctx)
 	if err != nil {
 		a.logger.Error("failed to get events to notify: " + err.Error())
+		schedulerErrorsTotal.WithLabelValues("get_events_to_notify").Inc()
 		return
 	}
+
+	schedulerScannedEventsTotal.Add(float64(len(events)))
 
 	for _, e := range events {
 		select {
@@ -135,11 +170,15 @@ func (a *App) scanEvents(ctx context.Context) {
 
 		if err := a.rmq.Publish(ctx, n); err != nil {
 			a.logger.Error("failed to publish notification for event " + e.ID + ": " + err.Error())
+			schedulerErrorsTotal.WithLabelValues("publish_notification").Inc()
 			continue
 		}
 
+		schedulerPublishedNotificationsTotal.Inc()
+
 		if err := a.service.MarkEventNotified(ctx, e.ID); err != nil {
 			a.logger.Error("failed to mark event as notified " + e.ID + ": " + err.Error())
+			schedulerErrorsTotal.WithLabelValues("mark_event_notified").Inc()
 		} else {
 			a.logger.Info("published notification and marked as notified: " + e.ID)
 		}

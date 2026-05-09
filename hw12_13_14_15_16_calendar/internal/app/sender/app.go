@@ -10,6 +10,27 @@ import (
 
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/logger"
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/pkg/queue/rabbitmq"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+var (
+	senderNotificationsReceivedTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "sender_notifications_received_total",
+		Help: "Total number of notifications received from queue.",
+	})
+
+	senderNotificationsSentTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "sender_notifications_sent_total",
+		Help: "Total number of notifications sent successfully.",
+	})
+
+	senderProcessingDuration = promauto.NewHistogram(prometheus.HistogramOpts{
+		Name:    "sender_processing_duration_seconds",
+		Help:    "Duration of notification processing.",
+		Buckets: prometheus.DefBuckets,
+	})
 )
 
 type App struct {
@@ -37,6 +58,7 @@ func (a *App) Init(_ context.Context) error {
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	mux.Handle("/metrics", promhttp.Handler())
 
 	a.httpServer = &http.Server{
 		Addr:              fmt.Sprintf("%s:%s", a.config.HTTP.Host, a.config.HTTP.Port),
@@ -82,6 +104,9 @@ func (a *App) Run(ctx context.Context) error {
 				a.logger.Info("Notifications channel closed")
 				return nil
 			}
+			senderNotificationsReceivedTotal.Inc()
+			start := time.Now()
+
 			timer := time.NewTimer(time.Duration(
 				rand.IntN(1900)+100, //nolint:gosec
 			) * time.Millisecond)
@@ -93,6 +118,9 @@ func (a *App) Run(ctx context.Context) error {
 			}
 			a.logger.Info(fmt.Sprintf("SENDER: Sending notification for event %s (user %s): %s",
 				n.EventID, n.UserID, n.Title))
+
+			senderNotificationsSentTotal.Inc()
+			senderProcessingDuration.Observe(time.Since(start).Seconds())
 		}
 	}
 }

@@ -16,6 +16,10 @@ spec:
     metadata:
       labels:
         app: {{ $name }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: {{ if eq $name "calendar" }}{{ $.Values.config.calendar.http.port | quote }}{{ else }}{{ (index $.Values.config $name).http.port | quote }}{{ end }}
     spec:
       initContainers:
         {{- if or (eq $name "calendar") (eq $name "scheduler") }}

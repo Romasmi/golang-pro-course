@@ -13,6 +13,9 @@ spec:
     metadata:
       labels:
         app: rabbitmq
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "15692"
     spec:
       containers:
         - name: rabbitmq

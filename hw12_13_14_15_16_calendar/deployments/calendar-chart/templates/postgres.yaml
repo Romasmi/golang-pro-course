@@ -13,6 +13,9 @@ spec:
     metadata:
       labels:
         app: postgres
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9187"
     spec:
       containers:
         - name: postgres
@@ -47,6 +50,14 @@ spec:
                 - {{ .Values.config.postgres.db | quote }}
             initialDelaySeconds: 5
             periodSeconds: 10
+        - name: postgres-exporter
+          image: prometheuscommunity/postgres-exporter:v0.15.0
+          env:
+            - name: DATA_SOURCE_NAME
+              value: "postgresql://{{ .Values.config.postgres.user }}:{{ .Values.config.postgres.password }}@localhost:5432/{{ .Values.config.postgres.db }}?sslmode=disable"
+          ports:
+            - containerPort: 9187
+              name: metrics
 ---
 apiVersion: v1
 kind: Service

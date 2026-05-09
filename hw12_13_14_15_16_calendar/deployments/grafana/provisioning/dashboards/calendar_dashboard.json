@@ -1,0 +1,88 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "title": "Requests Per Second (Calendar Service)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (endpoint) (rate(http_requests_total{job=\"calendar\"}[1m]))",
+          "legendFormat": "{{endpoint}}"
+        }
+      ]
+    },
+    {
+      "title": "CPU Usage per Container",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (container, name, pod) (rate(container_cpu_usage_seconds_total{container!=\"POD\",container!=\"\"}[1m]))",
+          "legendFormat": "{{container}} {{name}} {{pod}}"
+        }
+      ]
+    },
+    {
+      "title": "Scheduler Stats",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "rate(scheduler_scanned_events_total[1m])", "legendFormat": "Scanned" },
+        { "expr": "rate(scheduler_published_notifications_total[1m])", "legendFormat": "Published" }
+      ]
+    },
+    {
+      "title": "Sender Stats",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "targets": [
+        { "expr": "rate(sender_notifications_sent_total[1m])", "legendFormat": "Sent" }
+      ]
+    },
+    {
+      "title": "RabbitMQ Messages",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+      "targets": [
+        { "expr": "rabbitmq_queue_messages", "legendFormat": "Total Messages" },
+        { "expr": "rabbitmq_queue_messages_ready", "legendFormat": "Ready" }
+      ]
+    },
+    {
+      "title": "Database Connections",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        { "expr": "pg_stat_activity_count", "legendFormat": "Connections" }
+      ]
+    },
+    {
+      "title": "Postgres CPU Usage",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        { "expr": "sum(rate(container_cpu_usage_seconds_total{container=~\".*postgres.*\",container!=\"POD\"}[1m]))", "legendFormat": "Postgres CPU" }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Calendar Service Dashboard"
+}
