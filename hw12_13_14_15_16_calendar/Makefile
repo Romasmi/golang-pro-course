@@ -1,4 +1,6 @@
 BIN := "./bin/calendar"
+BIN_SCHEDULER := "./bin/calendar_scheduler"
+BIN_SENDER := "./bin/calendar_sender"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -25,12 +27,23 @@ env-down:
 	docker compose down
 
 build:
-	go build -v -o ./bin/calendar -ldflags "$(LDFLAGS)" ./cmd/calendar
-	go build -v -o ./bin/calendar_scheduler -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
-	go build -v -o ./bin/calendar_sender -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
+	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(BIN_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
+	go build -v -o $(BIN_SENDER) -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
 
 run: build
 	$(BIN) -config ./configs/config.yaml
+
+run-api: build
+	$(BIN) -config ./configs/config.yaml
+
+run-scheduler: build
+	$(BIN_SCHEDULER) -config ./configs/scheduler_config.yaml
+
+run-sender: build
+	$(BIN_SENDER) -config ./configs/sender_config.yaml
+
+run-all: build run-api run-scheduler run-sender
 
 build-img:
 	docker build \
@@ -67,4 +80,7 @@ generate:
 		--openapiv2_out=pkg/api --openapiv2_opt=logtostderr=true \
 		api/EventService.proto
 
-.PHONY: build run build-img run-img version test api-test lint migration generate
+load-tests:
+	k6 run load_tests/crud.js
+
+.PHONY: build run run-api run-scheduler run-sender run-all build-img run-img version test api-test lint migration generate load-tests
