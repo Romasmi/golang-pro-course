@@ -83,6 +83,7 @@ type Event struct {
 	StartAt       *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	EndAt         *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=end_at,json=endAt,proto3" json:"end_at,omitempty"`
 	UserId        string                 `protobuf:"bytes,6,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	RemindBefore  int64                  `protobuf:"varint,7,opt,name=remind_before,json=remindBefore,proto3" json:"remind_before,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -157,6 +158,13 @@ func (x *Event) GetUserId() string {
 		return x.UserId
 	}
 	return ""
+}
+
+func (x *Event) GetRemindBefore() int64 {
+	if x != nil {
+		return x.RemindBefore
+	}
+	return 0
 }
 
 type CreateEventRequest struct {
@@ -639,14 +647,15 @@ var File_EventService_proto protoreflect.FileDescriptor
 
 const file_EventService_proto_rawDesc = "" +
 	"\n" +
-	"\x12EventService.proto\x12\x05event\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/api/annotations.proto\"\xd2\x01\n" +
+	"\x12EventService.proto\x12\x05event\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/api/annotations.proto\"\xf7\x01\n" +
 	"\x05Event\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x125\n" +
 	"\bstart_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\astartAt\x121\n" +
 	"\x06end_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x05endAt\x12\x17\n" +
-	"\auser_id\x18\x06 \x01(\tR\x06userId\"8\n" +
+	"\auser_id\x18\x06 \x01(\tR\x06userId\x12#\n" +
+	"\rremind_before\x18\a \x01(\x03R\fremindBefore\"8\n" +
 	"\x12CreateEventRequest\x12\"\n" +
 	"\x05event\x18\x01 \x01(\v2\f.event.EventR\x05event\"9\n" +
 	"\x13CreateEventResponse\x12\"\n" +
