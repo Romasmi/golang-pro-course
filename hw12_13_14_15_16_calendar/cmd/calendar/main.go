@@ -26,14 +26,20 @@ func main() {
 		return
 	}
 
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
 	conf, err := calendar.NewConfig(configFile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to load config: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	l := logger.New(conf.Logger.Level, "calendar")
@@ -41,12 +47,12 @@ func main() {
 	app := calendar.New(conf, l)
 
 	if err := app.Init(ctx); err != nil {
-		l.Error("failed to init app: " + err.Error())
-		os.Exit(1)
+		return fmt.Errorf("failed to init app: %w", err)
 	}
 
 	if err := app.Run(ctx); err != nil {
-		l.Error("failed to run app: " + err.Error())
-		os.Exit(1)
+		return fmt.Errorf("failed to run app: %w", err)
 	}
+
+	return nil
 }

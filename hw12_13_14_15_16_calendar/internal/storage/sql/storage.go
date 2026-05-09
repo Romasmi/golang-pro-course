@@ -102,7 +102,8 @@ func (s *Storage) DeleteEvent(ctx context.Context, id string) error {
 
 func (s *Storage) GetEventByID(ctx context.Context, id string) (domain.Event, error) {
 	var event domain.Event
-	query := `SELECT id, title, description, start_at, end_at, user_id, notified, created_at, updated_at FROM events WHERE id=$1`
+	query := `SELECT id, title, description, start_at, end_at, user_id, 
+              notified, created_at, updated_at FROM events WHERE id=$1`
 	err := s.db.GetContext(ctx, &event, query, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

@@ -3,7 +3,7 @@ package sender
 import (
 	"context"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"time"
 
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/logger"
@@ -23,7 +23,7 @@ func New(conf Config, l *logger.Logger) *App {
 	}
 }
 
-func (a *App) Init(ctx context.Context) error {
+func (a *App) Init(_ context.Context) error {
 	rmq, err := rabbitmq.New(a.config.RabbitMQ.URL, a.config.RabbitMQ.Queue, a.logger)
 	if err != nil {
 		return fmt.Errorf("failed to connect to rabbitmq: %w", err)
@@ -40,7 +40,6 @@ func (a *App) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to start receiving: %w", err)
 	}
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	for {
 		select {
@@ -54,7 +53,7 @@ func (a *App) Run(ctx context.Context) error {
 				return nil
 			}
 			timer := time.NewTimer(time.Duration(
-				r.Intn(1900)+100,
+				rand.IntN(1900)+100, //nolint:gosec
 			) * time.Millisecond)
 			select {
 			case <-ctx.Done():

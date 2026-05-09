@@ -21,9 +21,9 @@ type LoggerConf struct {
 type StorageConf struct {
 	Type          string `yaml:"type"`
 	DSN           string `yaml:"dsn"`
-	MigrationsDir string `yaml:"migrationsDir"`
-	MaxOpenConns  int    `yaml:"maxOpenConns"`
-	MaxIdleConns  int    `yaml:"maxIdleConns"`
+	MigrationsDir string `yaml:"migrations_dir"`
+	MaxOpenConns  int    `yaml:"max_open_conns"`
+	MaxIdleConns  int    `yaml:"max_idle_conns"`
 }
 
 type HTTPConf struct {

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -21,9 +22,15 @@ func init() {
 func main() {
 	flag.Parse()
 
+	if err := run(); err != nil {
+		log.Fatalf("%v", err)
+	}
+}
+
+func run() error {
 	conf, err := sender.NewConfig(configPath)
 	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
+		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	l := logger.New(conf.Logger.Level, "sender")
@@ -34,12 +41,12 @@ func main() {
 	app := sender.New(conf, l)
 
 	if err := app.Init(ctx); err != nil {
-		l.Error("failed to init app: " + err.Error())
-		os.Exit(1)
+		return fmt.Errorf("failed to init app: %w", err)
 	}
 
 	if err := app.Run(ctx); err != nil {
-		l.Error("failed to run app: " + err.Error())
-		os.Exit(1)
+		return fmt.Errorf("failed to run app: %w", err)
 	}
+
+	return nil
 }

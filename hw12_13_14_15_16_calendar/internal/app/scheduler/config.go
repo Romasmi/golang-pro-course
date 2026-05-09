@@ -9,10 +9,10 @@ import (
 )
 
 type Config struct {
-	Logger    LoggerConf    `yaml:"logger"`
-	Storage   StorageConf   `yaml:"storage"`
-	RabbitMQ  RabbitMQConf  `yaml:"rabbitmq"`
-	Scheduler SchedulerConf `yaml:"scheduler"`
+	Logger    LoggerConf   `yaml:"logger"`
+	Storage   StorageConf  `yaml:"storage"`
+	RabbitMQ  RabbitMQConf `yaml:"rabbitmq"`
+	Scheduler Conf         `yaml:"scheduler"`
 }
 
 type LoggerConf struct {
@@ -22,7 +22,7 @@ type LoggerConf struct {
 type StorageConf struct {
 	Type          string `yaml:"type"`
 	DSN           string `yaml:"dsn"`
-	MigrationsDir string `yaml:"migrationsDir"`
+	MigrationsDir string `yaml:"migrations_dir"`
 }
 
 type RabbitMQConf struct {
@@ -30,7 +30,7 @@ type RabbitMQConf struct {
 	Queue string `yaml:"queue"`
 }
 
-type SchedulerConf struct {
+type Conf struct {
 	ScanInterval  time.Duration `yaml:"scan_interval"`
 	CleanInterval time.Duration `yaml:"clean_interval"`
 }
