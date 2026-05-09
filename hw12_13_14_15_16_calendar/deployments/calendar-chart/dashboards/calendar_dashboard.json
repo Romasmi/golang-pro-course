@@ -1,4 +1,6 @@
 {
+  "id": null,
+  "uid": "calendar-service-dashboard",
   "annotations": {
     "list": []
   },
@@ -24,8 +26,8 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "targets": [
         {
-          "expr": "sum by (container, name, pod) (rate(container_cpu_usage_seconds_total{id!=\"/\", container!~\"POD\", name!~\"^/$\"}[1m]))",
-          "legendFormat": "{{container}}{{name}} {{pod}}"
+          "expr": "sum by (container, name, pod, container_label_com_docker_compose_service) (rate(container_cpu_usage_seconds_total{id!=\"/\", container!~\"POD|prometheus.*|grafana.*|cadvisor.*|postgres-exporter.*\", name!~\"^/$|.*(prometheus|grafana|cadvisor|postgres-exporter).*\", container_label_com_docker_compose_service!~\"prometheus.*|grafana.*|cadvisor.*|postgres-exporter.*\"}[1m]))",
+          "legendFormat": "{{container}} {{name}} {{pod}} {{container_label_com_docker_compose_service}}"
         }
       ]
     },
@@ -60,7 +62,7 @@
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
       "targets": [
-        { "expr": "pg_stat_activity_count", "legendFormat": "Connections" }
+        { "expr": "sum(pg_stat_database_numbackends) or pg_stat_activity_count", "legendFormat": "Connections" }
       ]
     },
     {
@@ -68,7 +70,7 @@
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
       "targets": [
-        { "expr": "sum(rate(container_cpu_usage_seconds_total{container=~\".*postgres.*\",container!=\"POD\"}[1m])) or sum(rate(container_cpu_usage_seconds_total{name=~\".*postgres.*\",container!=\"POD\"}[1m]))", "legendFormat": "Postgres CPU" }
+        { "expr": "sum(rate(container_cpu_usage_seconds_total{container=~\".*postgres.*\",container!~\"POD|.*exporter.*\"}[1m])) or sum(rate(container_cpu_usage_seconds_total{name=~\".*postgres.*\",container!~\"POD|.*exporter.*\"}[1m])) or sum(rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service=~\".*postgres.*\",container_label_com_docker_compose_service!~\".*exporter.*\"}[1m]))", "legendFormat": "Postgres CPU" }
       ]
     }
   ],

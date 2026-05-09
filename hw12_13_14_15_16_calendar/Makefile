@@ -138,4 +138,7 @@ k8s-logs-sender:
 k8s-logs:
 	kubectl logs -f -n $(K8S_NAMESPACE) -l 'app in (calendar, scheduler, sender)' --all-containers=true --prefix
 
-.PHONY: build run run-api run-scheduler run-sender run-all build-img run-img version test api-test lint migration generate load-tests up down integration-tests k8s-install k8s-uninstall k8s-load-images k8s-forward-api k8s-forward-db forward-grafana k8s-status k8s-logs-api k8s-logs-scheduler k8s-logs-sender k8s-logs
+k8s-restart-scheduler:
+	kubectl rollout restart deployment -n $(K8S_NAMESPACE) -l app=scheduler
+
+.PHONY: build run run-api run-scheduler run-sender run-all build-img run-img version test api-test lint migration generate load-tests up down integration-tests k8s-install k8s-uninstall k8s-load-images k8s-forward-api k8s-forward-db forward-grafana k8s-status k8s-logs-api k8s-logs-scheduler k8s-logs-sender k8s-logs k8s-restart-scheduler
