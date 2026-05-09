@@ -3,3 +3,6 @@ logger:
 rabbitmq:
   url: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@${RABBITMQ_HOST}:${RABBITMQ_PORT}/"
   queue: "notifications"
+http:
+  host: "${SENDER_HTTP_HOST}"
+  port: "${SENDER_HTTP_PORT}"

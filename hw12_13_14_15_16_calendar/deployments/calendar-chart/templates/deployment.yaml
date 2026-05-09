@@ -1,4 +1,6 @@
 {{- range $name, $image := .Values.images }}
+{{- if or (eq $name "calendar") (eq $name "scheduler") (eq $name "sender") }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,6 +17,17 @@ spec:
       labels:
         app: {{ $name }}
     spec:
+      initContainers:
+        {{- if or (eq $name "calendar") (eq $name "scheduler") }}
+        - name: wait-for-postgres
+          image: busybox:latest
+          command: ['sh', '-c', 'until nc -z {{ include "calendar-chart.fullname" $ }}-postgres {{ $.Values.config.postgres.port }}; do echo waiting for postgres; sleep 2; done']
+        {{- end }}
+        {{- if or (eq $name "scheduler") (eq $name "sender") }}
+        - name: wait-for-rabbitmq
+          image: busybox:latest
+          command: ['sh', '-c', 'until nc -z {{ include "calendar-chart.fullname" $ }}-rabbitmq {{ $.Values.config.rabbitmq.port }}; do echo waiting for rabbitmq; sleep 2; done']
+        {{- end }}
       containers:
         - name: {{ $name }}
           image: "{{ $image.repository }}:{{ $image.tag }}"
@@ -55,10 +68,20 @@ spec:
               value: {{ $.Values.config.calendar.grpc.port | quote }}
             {{- end }}
             {{- if eq $name "scheduler" }}
+            - name: SCHEDULER_HTTP_HOST
+              value: "0.0.0.0"
+            - name: SCHEDULER_HTTP_PORT
+              value: {{ $.Values.config.scheduler.http.port | quote }}
             - name: SCHEDULER_SCAN_INTERVAL
               value: {{ $.Values.config.scheduler.scanInterval | quote }}
             - name: SCHEDULER_CLEAN_INTERVAL
               value: {{ $.Values.config.scheduler.cleanInterval | quote }}
+            {{- end }}
+            {{- if eq $name "sender" }}
+            - name: SENDER_HTTP_HOST
+              value: "0.0.0.0"
+            - name: SENDER_HTTP_PORT
+              value: {{ $.Values.config.sender.http.port | quote }}
             {{- end }}
           {{- if eq $name "calendar" }}
           ports:
@@ -70,12 +93,30 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /
+              path: /health
               port: http
           readinessProbe:
             httpGet:
-              path: /
+              path: /health
               port: http
           {{- end }}
----
+          {{- if or (eq $name "scheduler") (eq $name "sender") }}
+          ports:
+            - name: health
+              containerPort: {{ (index $.Values.config $name).http.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- end }}
+{{- end }}
 {{- end }}

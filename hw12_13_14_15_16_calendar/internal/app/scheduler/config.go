@@ -13,6 +13,12 @@ type Config struct {
 	Storage   StorageConf  `yaml:"storage"`
 	RabbitMQ  RabbitMQConf `yaml:"rabbitmq"`
 	Scheduler Conf         `yaml:"scheduler"`
+	HTTP      HTTPConf     `yaml:"http"`
+}
+
+type HTTPConf struct {
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
 }
 
 type LoggerConf struct {

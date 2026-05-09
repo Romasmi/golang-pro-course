@@ -39,6 +39,9 @@ func NewServer(logger Logger, grpcAddr string, host, port string) *Server {
 	}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	mux.Handle("/", gwmux)
 	mux.HandleFunc("GET /swagger", s.serveSwaggerUI)
 	mux.HandleFunc("GET /swagger.json", s.serveSwaggerJSON)

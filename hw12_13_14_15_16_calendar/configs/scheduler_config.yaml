@@ -6,6 +6,9 @@ storage:
 rabbitmq:
   url: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@${RABBITMQ_HOST}:${RABBITMQ_PORT}/"
   queue: "notifications"
+http:
+  host: "${SCHEDULER_HTTP_HOST}"
+  port: "${SCHEDULER_HTTP_PORT}"
 scheduler:
   scan_interval: ${SCHEDULER_SCAN_INTERVAL}
   clean_interval: ${SCHEDULER_CLEAN_INTERVAL}

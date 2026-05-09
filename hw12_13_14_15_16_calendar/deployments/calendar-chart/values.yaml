@@ -42,8 +42,13 @@ config:
     grpc:
       port: 50051
   scheduler:
+    http:
+      port: 8081
     scanInterval: 10s
     cleanInterval: 1h
+  sender:
+    http:
+      port: 8081
 
 service:
   calendar:

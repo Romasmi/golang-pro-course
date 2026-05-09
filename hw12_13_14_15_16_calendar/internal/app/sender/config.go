@@ -10,6 +10,12 @@ import (
 type Config struct {
 	Logger   LoggerConf   `yaml:"logger"`
 	RabbitMQ RabbitMQConf `yaml:"rabbitmq"`
+	HTTP     HTTPConf     `yaml:"http"`
+}
+
+type HTTPConf struct {
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
 }
 
 type LoggerConf struct {
