@@ -3,6 +3,8 @@ package sender
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/logger"
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/queue/rabbitmq"
@@ -38,6 +40,7 @@ func (a *App) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to start receiving: %w", err)
 	}
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	for {
 		select {
@@ -50,6 +53,9 @@ func (a *App) Run(ctx context.Context) error {
 				a.logger.Info("Notifications channel closed")
 				return nil
 			}
+			time.Sleep(time.Duration(
+				r.Intn(1900)+100,
+			) * time.Millisecond)
 			a.logger.Info(fmt.Sprintf("SENDER: Sending notification for event %s (user %s): %s",
 				n.EventID, n.UserID, n.Title))
 		}
