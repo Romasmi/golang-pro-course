@@ -88,4 +88,10 @@ generate:
 load-tests:
 	k6 run load_tests/crud.js
 
-.PHONY: build run run-api run-scheduler run-sender run-all build-img run-img version test api-test lint migration generate load-tests up down
+integration-tests:
+	docker compose -f deployments/docker-compose.integration.yaml up --build --exit-code-from integration-tests; \
+	RET=$$?; \
+	docker compose -f deployments/docker-compose.integration.yaml down; \
+	exit $$RET
+
+.PHONY: build run run-api run-scheduler run-sender run-all build-img run-img version test api-test lint migration generate load-tests up down integration-tests
