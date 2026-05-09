@@ -158,10 +158,6 @@
                 },
                 "userId": {
                   "type": "string"
-                },
-                "remindBefore": {
-                  "type": "string",
-                  "format": "int64"
                 }
               }
             }
@@ -256,10 +252,6 @@
         },
         "userId": {
           "type": "string"
-        },
-        "remindBefore": {
-          "type": "string",
-          "format": "int64"
         }
       }
     },

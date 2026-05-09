@@ -140,14 +140,12 @@ func TestStorage(t *testing.T) {
 		s := New()
 		now := time.Now()
 
-		// Should notify (StartAt - 10s <= now)
-		_ = s.AddEvent(ctx, domain.Event{ID: "n1", StartAt: now.Add(5 * time.Second), RemindBefore: 10})
-		// Should not notify (StartAt - 10s > now)
-		_ = s.AddEvent(ctx, domain.Event{ID: "n2", StartAt: now.Add(20 * time.Second), RemindBefore: 10})
+		// Should notify (StartAt <= now)
+		_ = s.AddEvent(ctx, domain.Event{ID: "n1", StartAt: now.Add(-5 * time.Second)})
+		// Should not notify (StartAt > now)
+		_ = s.AddEvent(ctx, domain.Event{ID: "n2", StartAt: now.Add(20 * time.Second)})
 		// Already notified
-		_ = s.AddEvent(ctx, domain.Event{ID: "n3", StartAt: now.Add(5 * time.Second), RemindBefore: 10, Notified: true})
-		// No reminder
-		_ = s.AddEvent(ctx, domain.Event{ID: "n4", StartAt: now.Add(5 * time.Second), RemindBefore: 0})
+		_ = s.AddEvent(ctx, domain.Event{ID: "n3", StartAt: now.Add(-5 * time.Second), Notified: true})
 
 		toNotify, err := s.GetEventsToNotify(ctx)
 		require.NoError(t, err)

@@ -12,16 +12,15 @@ var (
 )
 
 type Event struct {
-	ID           string    `db:"id"`
-	Title        string    `db:"title"`
-	Description  string    `db:"description"`
-	StartAt      time.Time `db:"start_at"`
-	EndAt        time.Time `db:"end_at"`
-	UserID       string    `db:"user_id"`
-	RemindBefore int64     `db:"remind_before"`
-	Notified     bool      `db:"notified"`
-	CreatedAt    time.Time `db:"created_at"`
-	UpdatedAt    time.Time `db:"updated_at"`
+	ID          string    `db:"id"`
+	Title       string    `db:"title"`
+	Description string    `db:"description"`
+	StartAt     time.Time `db:"start_at"`
+	EndAt       time.Time `db:"end_at"`
+	UserID      string    `db:"user_id"`
+	Notified    bool      `db:"notified"`
+	CreatedAt   time.Time `db:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at"`
 }
 
 type EventFilter struct {

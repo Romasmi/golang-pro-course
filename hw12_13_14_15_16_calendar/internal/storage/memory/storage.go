@@ -93,11 +93,8 @@ func (s *Storage) GetEventsToNotify(_ context.Context) ([]domain.Event, error) {
 	res := make([]domain.Event, 0)
 	now := time.Now()
 	for _, e := range s.events {
-		if !e.Notified && e.RemindBefore > 0 {
-			remindAt := e.StartAt.Add(-time.Duration(e.RemindBefore) * time.Second)
-			if remindAt.Before(now) || remindAt.Equal(now) {
-				res = append(res, e)
-			}
+		if !e.Notified && (e.StartAt.Before(now) || e.StartAt.Equal(now)) {
+			res = append(res, e)
 		}
 	}
 	return res, nil

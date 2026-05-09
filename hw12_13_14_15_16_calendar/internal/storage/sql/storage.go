@@ -58,8 +58,8 @@ func (s *Storage) Migrate(ctx context.Context, migrationsDir string) error {
 }
 
 func (s *Storage) AddEvent(ctx context.Context, event domain.Event) error {
-	query := `INSERT INTO events (id, title, description, start_at, end_at, user_id, remind_before) 
-              VALUES (:id, :title, :description, :start_at, :end_at, :user_id, :remind_before)`
+	query := `INSERT INTO events (id, title, description, start_at, end_at, user_id) 
+              VALUES (:id, :title, :description, :start_at, :end_at, :user_id)`
 	_, err := s.db.NamedExecContext(ctx, query, event)
 	if err != nil {
 		return fmt.Errorf("failed to add event: %w", err)
@@ -69,7 +69,7 @@ func (s *Storage) AddEvent(ctx context.Context, event domain.Event) error {
 
 func (s *Storage) UpdateEvent(ctx context.Context, event domain.Event) error {
 	query := `UPDATE events SET title=:title, description=:description, start_at=:start_at, 
-              end_at=:end_at, user_id=:user_id, remind_before=:remind_before, updated_at=NOW(), notified=FALSE WHERE id=:id`
+              end_at=:end_at, user_id=:user_id, updated_at=NOW(), notified=FALSE WHERE id=:id`
 	res, err := s.db.NamedExecContext(ctx, query, event)
 	if err != nil {
 		return fmt.Errorf("failed to update event: %w", err)
@@ -102,7 +102,7 @@ func (s *Storage) DeleteEvent(ctx context.Context, id string) error {
 
 func (s *Storage) GetEventByID(ctx context.Context, id string) (domain.Event, error) {
 	var event domain.Event
-	query := `SELECT id, title, description, start_at, end_at, user_id, remind_before, notified, created_at, updated_at FROM events WHERE id=$1`
+	query := `SELECT id, title, description, start_at, end_at, user_id, notified, created_at, updated_at FROM events WHERE id=$1`
 	err := s.db.GetContext(ctx, &event, query, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -115,7 +115,7 @@ func (s *Storage) GetEventByID(ctx context.Context, id string) (domain.Event, er
 
 func (s *Storage) ListEvents(ctx context.Context) ([]domain.Event, error) {
 	var events []domain.Event
-	query := `SELECT id, title, description, start_at, end_at, user_id, remind_before, notified, created_at, updated_at FROM events`
+	query := `SELECT id, title, description, start_at, end_at, user_id, notified, created_at, updated_at FROM events`
 	err := s.db.SelectContext(ctx, &events, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list events: %w", err)
@@ -125,9 +125,9 @@ func (s *Storage) ListEvents(ctx context.Context) ([]domain.Event, error) {
 
 func (s *Storage) GetEventsToNotify(ctx context.Context) ([]domain.Event, error) {
 	var events []domain.Event
-	query := `SELECT id, title, description, start_at, end_at, user_id, remind_before, notified, created_at, updated_at 
+	query := `SELECT id, title, description, start_at, end_at, user_id, notified, created_at, updated_at 
               FROM events 
-              WHERE notified = FALSE AND remind_before > 0 AND (start_at - (remind_before * interval '1 second')) <= NOW()`
+              WHERE notified = FALSE AND start_at <= NOW()`
 	err := s.db.SelectContext(ctx, &events, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get events to notify: %w", err)
@@ -137,7 +137,7 @@ func (s *Storage) GetEventsToNotify(ctx context.Context) ([]domain.Event, error)
 
 func (s *Storage) ListEventsWithFilter(ctx context.Context, filter domain.EventFilter) ([]domain.Event, error) {
 	var events []domain.Event
-	query := `SELECT id, title, description, start_at, end_at, user_id, remind_before, notified, created_at, updated_at 
+	query := `SELECT id, title, description, start_at, end_at, user_id, notified, created_at, updated_at 
               FROM events 
               WHERE start_at >= $1 AND start_at < $2`
 	err := s.db.SelectContext(ctx, &events, query, filter.From, filter.To)

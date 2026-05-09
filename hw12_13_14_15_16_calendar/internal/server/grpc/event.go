@@ -84,25 +84,23 @@ func protoToDomain(e *api.Event) domain.Event {
 		return domain.Event{}
 	}
 	return domain.Event{
-		ID:           e.Id,
-		Title:        e.Title,
-		Description:  e.Description,
-		StartAt:      e.StartAt.AsTime(),
-		EndAt:        e.EndAt.AsTime(),
-		UserID:       e.UserId,
-		RemindBefore: e.RemindBefore,
+		ID:          e.Id,
+		Title:       e.Title,
+		Description: e.Description,
+		StartAt:     e.StartAt.AsTime(),
+		EndAt:       e.EndAt.AsTime(),
+		UserID:      e.UserId,
 	}
 }
 
 func domainToProto(e domain.Event) *api.Event {
 	return &api.Event{
-		Id:           e.ID,
-		Title:        e.Title,
-		Description:  e.Description,
-		StartAt:      timestamppb.New(e.StartAt),
-		EndAt:        timestamppb.New(e.EndAt),
-		UserId:       e.UserID,
-		RemindBefore: e.RemindBefore,
+		Id:          e.ID,
+		Title:       e.Title,
+		Description: e.Description,
+		StartAt:     timestamppb.New(e.StartAt),
+		EndAt:       timestamppb.New(e.EndAt),
+		UserId:      e.UserID,
 	}
 }
 
