@@ -44,6 +44,21 @@ func (m *MockRepository) ListEventsWithFilter(ctx context.Context, filter domain
 	return args.Get(0).([]domain.Event), args.Error(1)
 }
 
+func (m *MockRepository) GetEventsToNotify(ctx context.Context) ([]domain.Event, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]domain.Event), args.Error(1)
+}
+
+func (m *MockRepository) MarkEventNotified(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockRepository) DeleteOldEvents(ctx context.Context, olderThan time.Time) (int64, error) {
+	args := m.Called(ctx, olderThan)
+	return args.Get(0).(int64), args.Error(1)
+}
+
 type MockLogger struct {
 	mock.Mock
 }
@@ -141,5 +156,57 @@ func TestCalendarService_ListEventsByFilter(t *testing.T) {
 	res, err := s.ListEventsByFilter(context.Background(), from, to)
 	assert.NoError(t, err)
 	assert.Equal(t, events, res)
+	repo.AssertExpectations(t)
+}
+
+func TestCalendarService_DeleteEvent(t *testing.T) {
+	repo := new(MockRepository)
+	logger := new(MockLogger)
+	s := New(logger, repo)
+
+	repo.On("DeleteEvent", mock.Anything, "1").Return(nil)
+
+	err := s.DeleteEvent(context.Background(), "1")
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+}
+
+func TestCalendarService_GetEventsToNotify(t *testing.T) {
+	repo := new(MockRepository)
+	logger := new(MockLogger)
+	s := New(logger, repo)
+
+	events := []domain.Event{{ID: "1", Title: "Test"}}
+	repo.On("GetEventsToNotify", mock.Anything).Return(events, nil)
+
+	res, err := s.GetEventsToNotify(context.Background())
+	assert.NoError(t, err)
+	assert.Equal(t, events, res)
+	repo.AssertExpectations(t)
+}
+
+func TestCalendarService_MarkEventNotified(t *testing.T) {
+	repo := new(MockRepository)
+	logger := new(MockLogger)
+	s := New(logger, repo)
+
+	repo.On("MarkEventNotified", mock.Anything, "1").Return(nil)
+
+	err := s.MarkEventNotified(context.Background(), "1")
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+}
+
+func TestCalendarService_DeleteOldEvents(t *testing.T) {
+	repo := new(MockRepository)
+	logger := new(MockLogger)
+	s := New(logger, repo)
+
+	now := time.Now()
+	repo.On("DeleteOldEvents", mock.Anything, now).Return(int64(5), nil)
+
+	count, err := s.DeleteOldEvents(context.Background(), now)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(5), count)
 	repo.AssertExpectations(t)
 }
