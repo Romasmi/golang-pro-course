@@ -5,22 +5,32 @@ scrape_configs:
   - job_name: 'calendar'
     static_configs:
       - targets: ['calendar:8080']
+        labels:
+          app: 'calendar'
 
   - job_name: 'scheduler'
     static_configs:
       - targets: ['scheduler:8081']
+        labels:
+          app: 'scheduler'
 
   - job_name: 'sender'
     static_configs:
       - targets: ['sender:8081']
+        labels:
+          app: 'sender'
 
   - job_name: 'rabbitmq'
     static_configs:
       - targets: ['rabbitmq:15692']
+        labels:
+          app: 'rabbitmq'
 
   - job_name: 'postgres'
     static_configs:
       - targets: ['postgres-exporter:9187']
+        labels:
+          app: 'postgres'
 
   - job_name: 'cadvisor'
     static_configs:

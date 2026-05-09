@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -41,13 +42,31 @@ func metricsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(rw, r)
 
 		latency := time.Since(start)
-		endpoint := r.URL.Path
-		// Simple way to avoid high cardinality for variable path params if any
-		// But here we might want to keep it simple for now.
+		endpoint := normalizePath(r.URL.Path)
 
 		httpRequestsTotal.WithLabelValues(r.Method, endpoint, fmt.Sprintf("%d", rw.status)).Inc()
 		httpRequestDuration.WithLabelValues(r.Method, endpoint).Observe(latency.Seconds())
 	})
+}
+
+func normalizePath(path string) string {
+	parts := strings.Split(path, "/")
+	if len(parts) < 2 {
+		return path
+	}
+
+	if parts[1] == "events" {
+		if len(parts) == 3 {
+			// /events/{id}
+			return "/events/{id}"
+		}
+		if len(parts) == 4 && parts[2] == "interval" {
+			// /events/interval/{interval}
+			return "/events/interval/{interval}"
+		}
+	}
+
+	return path
 }
 
 func loggingMiddleware(logger Logger, next http.Handler) http.Handler {

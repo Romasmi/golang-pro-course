@@ -13,7 +13,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "targets": [
         {
-          "expr": "sum by (endpoint) (rate(http_requests_total{job=\"calendar\"}[1m]))",
+          "expr": "sum by (endpoint) (rate(http_requests_total{app=\"calendar\"}[1m]))",
           "legendFormat": "{{endpoint}}"
         }
       ]
@@ -24,8 +24,8 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "targets": [
         {
-          "expr": "sum by (container, name, pod) (rate(container_cpu_usage_seconds_total{container!=\"POD\",container!=\"\"}[1m]))",
-          "legendFormat": "{{container}} {{name}} {{pod}}"
+          "expr": "sum by (container, name, pod) (rate(container_cpu_usage_seconds_total{id!=\"/\", container!~\"POD\", name!~\"^/$\"}[1m]))",
+          "legendFormat": "{{container}}{{name}} {{pod}}"
         }
       ]
     },
@@ -68,7 +68,7 @@
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
       "targets": [
-        { "expr": "sum(rate(container_cpu_usage_seconds_total{container=~\".*postgres.*\",container!=\"POD\"}[1m]))", "legendFormat": "Postgres CPU" }
+        { "expr": "sum(rate(container_cpu_usage_seconds_total{container=~\".*postgres.*\",container!=\"POD\"}[1m])) or sum(rate(container_cpu_usage_seconds_total{name=~\".*postgres.*\",container!=\"POD\"}[1m]))", "legendFormat": "Postgres CPU" }
       ]
     }
   ],
