@@ -21,10 +21,10 @@ RABBIT_PORT_UI ?= 15672
 RABBIT_CONTAINER := rabbitmq
 
 env-up:
-	docker compose up -d
+	docker compose -f deployments/docker-compose.yaml up -d
 
 env-down:
-	docker compose down
+	docker compose -f deployments/docker-compose.yaml down
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
