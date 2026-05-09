@@ -22,7 +22,7 @@ func TestNew(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := New(tt.level)
+			l := New(tt.level, "test")
 			require.NotNil(t, l)
 			require.NotNil(t, l.Logger)
 		})

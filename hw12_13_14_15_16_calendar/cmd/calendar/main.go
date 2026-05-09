@@ -36,7 +36,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	l := logger.New(conf.Logger.Level)
+	l := logger.New(conf.Logger.Level, "calendar")
 
 	app := calendar.New(conf, l)
 

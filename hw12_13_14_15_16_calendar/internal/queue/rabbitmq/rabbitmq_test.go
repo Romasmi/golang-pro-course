@@ -10,12 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// This test requires a running RabbitMQ instance.
-// If it's not available, the test will be skipped.
 func TestRabbitMQ(t *testing.T) {
 	url := "amqp://rabbit:password@localhost:5672/"
 	queueName := "test_queue"
-	l := logger.New("error")
+	l := logger.New("error", "test")
 
 	rmq, err := New(url, queueName, l)
 	if err != nil {

@@ -26,7 +26,7 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	l := logger.New(conf.Logger.Level)
+	l := logger.New(conf.Logger.Level, "sender")
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
