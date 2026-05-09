@@ -4,13 +4,20 @@ import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 
 export const options = {
   scenarios: {
-    constant_request_rate: {
-      executor: 'constant-arrival-rate',
-      rate: 5,
+    random_rps: {
+      executor: 'ramping-arrival-rate',
+      startRate: 1,
       timeUnit: '1s',
-      duration: '1m',
       preAllocatedVUs: 50,
       maxVUs: 200,
+
+      stages: [
+        { target: 3, duration: '30s' },
+        { target: 15, duration: '20s' },
+        { target: 7, duration: '40s' },
+        { target: 20, duration: '15s' },
+        { target: 2, duration: '10s' },
+      ],
     },
   },
 };
