@@ -1,0 +1,80 @@
+services:
+  postgres-test:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq-test:
+    image: rabbitmq:management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  calendar-test:
+    build:
+      context: ..
+      dockerfile: deployments/calendar.Dockerfile
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=postgres-test
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/hello"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  scheduler-test:
+    build:
+      context: ..
+      dockerfile: deployments/scheduler.Dockerfile
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=postgres-test
+      - RABBITMQ_HOST=rabbitmq-test
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+
+  sender-test:
+    build:
+      context: ..
+      dockerfile: deployments/sender.Dockerfile
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_HOST=rabbitmq-test
+    depends_on:
+      rabbitmq-test:
+        condition: service_healthy
+
+  integration-tests:
+    build:
+      context: ..
+      dockerfile: deployments/integration.Dockerfile
+    env_file:
+      - .env
+    environment:
+      - CALENDAR_GRPC_HOST=calendar-test
+      - CALENDAR_GRPC_PORT=50051
+    depends_on:
+      calendar-test:
+        condition: service_healthy
