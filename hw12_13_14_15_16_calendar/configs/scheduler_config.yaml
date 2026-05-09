@@ -1,11 +1,11 @@
 logger:
-  level: "info"
+  level: "${LOGGER_LEVEL}"
 storage:
   type: "sql"
-  dsn: "postgres://postgres:password@localhost:5435/backend?sslmode=disable"
+  dsn: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable"
 rabbitmq:
-  url: "amqp://rabbit:password@localhost:5672/"
+  url: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@${RABBITMQ_HOST}:${RABBITMQ_PORT}/"
   queue: "notifications"
 scheduler:
-  scan_interval: 10s
-  clean_interval: 1h
+  scan_interval: ${SCHEDULER_SCAN_INTERVAL}
+  clean_interval: ${SCHEDULER_CLEAN_INTERVAL}

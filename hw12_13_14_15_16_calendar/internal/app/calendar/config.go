@@ -42,7 +42,10 @@ func NewConfig(path string) (Config, error) {
 	if err != nil {
 		return config, fmt.Errorf("failed to read config file: %w", err)
 	}
-	if err := yaml.Unmarshal(data, &config); err != nil {
+
+	expandedData := os.ExpandEnv(string(data))
+
+	if err := yaml.Unmarshal([]byte(expandedData), &config); err != nil {
 		return config, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 	return config, nil
