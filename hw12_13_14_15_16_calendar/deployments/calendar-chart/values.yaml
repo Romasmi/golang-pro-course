@@ -1,0 +1,67 @@
+replicaCount: 1
+
+images:
+  calendar:
+    repository: calendar
+    tag: latest
+    pullPolicy: IfNotPresent
+  scheduler:
+    repository: scheduler
+    tag: latest
+    pullPolicy: IfNotPresent
+  sender:
+    repository: sender
+    tag: latest
+    pullPolicy: IfNotPresent
+  postgres:
+    repository: postgres
+    tag: "17"
+    pullPolicy: IfNotPresent
+  rabbitmq:
+    repository: rabbitmq
+    tag: management
+    pullPolicy: IfNotPresent
+
+config:
+  postgres:
+    host: postgres
+    port: 5432
+    user: postgres
+    password: password
+    db: backend
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    user: rabbit
+    password: password
+  logger:
+    level: info
+  calendar:
+    http:
+      port: 8080
+    grpc:
+      port: 50051
+  scheduler:
+    scanInterval: 10s
+    cleanInterval: 1h
+
+service:
+  calendar:
+    type: ClusterIP
+    httpPort: 80
+    grpcPort: 50051
+
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: calendar.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+resources: {}
+nodeSelector: {}
+affinity: {}
+tolerations: []

@@ -1,0 +1,81 @@
+{{- range $name, $image := .Values.images }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "calendar-chart.fullname" $ }}-{{ $name }}
+  labels:
+    app: {{ $name }}
+spec:
+  replicas: {{ $.Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+    spec:
+      containers:
+        - name: {{ $name }}
+          image: "{{ $image.repository }}:{{ $image.tag }}"
+          imagePullPolicy: {{ $image.pullPolicy }}
+          env:
+            - name: LOGGER_LEVEL
+              value: {{ $.Values.config.logger.level | quote }}
+            {{- if or (eq $name "calendar") (eq $name "scheduler") }}
+            - name: POSTGRES_HOST
+              value: {{ include "calendar-chart.fullname" $ }}-postgres
+            - name: POSTGRES_PORT
+              value: {{ $.Values.config.postgres.port | quote }}
+            - name: POSTGRES_USER
+              value: {{ $.Values.config.postgres.user | quote }}
+            - name: POSTGRES_PASSWORD
+              value: {{ $.Values.config.postgres.password | quote }}
+            - name: POSTGRES_DB
+              value: {{ $.Values.config.postgres.db | quote }}
+            {{- end }}
+            {{- if or (eq $name "scheduler") (eq $name "sender") }}
+            - name: RABBITMQ_HOST
+              value: {{ include "calendar-chart.fullname" $ }}-rabbitmq
+            - name: RABBITMQ_PORT
+              value: {{ $.Values.config.rabbitmq.port | quote }}
+            - name: RABBITMQ_DEFAULT_USER
+              value: {{ $.Values.config.rabbitmq.user | quote }}
+            - name: RABBITMQ_DEFAULT_PASS
+              value: {{ $.Values.config.rabbitmq.password | quote }}
+            {{- end }}
+            {{- if eq $name "calendar" }}
+            - name: CALENDAR_HTTP_HOST
+              value: "0.0.0.0"
+            - name: CALENDAR_HTTP_PORT
+              value: {{ $.Values.config.calendar.http.port | quote }}
+            - name: CALENDAR_GRPC_HOST
+              value: "0.0.0.0"
+            - name: CALENDAR_GRPC_PORT
+              value: {{ $.Values.config.calendar.grpc.port | quote }}
+            {{- end }}
+            {{- if eq $name "scheduler" }}
+            - name: SCHEDULER_SCAN_INTERVAL
+              value: {{ $.Values.config.scheduler.scanInterval | quote }}
+            - name: SCHEDULER_CLEAN_INTERVAL
+              value: {{ $.Values.config.scheduler.cleanInterval | quote }}
+            {{- end }}
+          {{- if eq $name "calendar" }}
+          ports:
+            - name: http
+              containerPort: {{ $.Values.config.calendar.http.port }}
+              protocol: TCP
+            - name: grpc
+              containerPort: {{ $.Values.config.calendar.grpc.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          {{- end }}
+---
+{{- end }}
