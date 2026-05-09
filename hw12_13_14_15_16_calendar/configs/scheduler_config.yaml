@@ -1,0 +1,11 @@
+logger:
+  level: "info"
+storage:
+  type: "sql"
+  dsn: "postgres://postgres:password@localhost:5435/backend?sslmode=disable"
+rabbitmq:
+  url: "amqp://rabbit:password@localhost:5672/"
+  queue: "notifications"
+scheduler:
+  scan_interval: 10s
+  clean_interval: 1h
