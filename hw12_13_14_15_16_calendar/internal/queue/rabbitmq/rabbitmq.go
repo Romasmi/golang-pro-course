@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/logger"
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/queue"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -13,9 +14,10 @@ type RabbitMQ struct {
 	conn    *amqp.Connection
 	channel *amqp.Channel
 	queue   string
+	logger  *logger.Logger
 }
 
-func New(url, queueName string) (*RabbitMQ, error) {
+func New(url, queueName string, l *logger.Logger) (*RabbitMQ, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
@@ -45,6 +47,7 @@ func New(url, queueName string) (*RabbitMQ, error) {
 		conn:    conn,
 		channel: ch,
 		queue:   queueName,
+		logger:  l,
 	}, nil
 }
 
@@ -98,7 +101,7 @@ func (r *RabbitMQ) Receive(ctx context.Context) (<-chan queue.Notification, erro
 				}
 				var n queue.Notification
 				if err := json.Unmarshal(d.Body, &n); err != nil {
-					// In a real app we might want to log this or send to a DLQ
+					r.logger.Error(fmt.Sprintf("failed to unmarshal notification: %v, body: %s", err, string(d.Body)))
 					continue
 				}
 				notifications <- n

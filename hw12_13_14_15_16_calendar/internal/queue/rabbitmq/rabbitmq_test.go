@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/logger"
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/queue"
 	"github.com/stretchr/testify/require"
 )
@@ -14,8 +15,9 @@ import (
 func TestRabbitMQ(t *testing.T) {
 	url := "amqp://rabbit:password@localhost:5672/"
 	queueName := "test_queue"
+	l := logger.New("error")
 
-	rmq, err := New(url, queueName)
+	rmq, err := New(url, queueName, l)
 	if err != nil {
 		t.Skip("RabbitMQ is not available")
 		return
