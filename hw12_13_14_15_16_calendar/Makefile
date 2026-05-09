@@ -20,10 +20,10 @@ RABBIT_PORT ?= 5672
 RABBIT_PORT_UI ?= 15672
 RABBIT_CONTAINER := rabbitmq
 
-env-up:
+up:
 	docker compose -f deployments/docker-compose.yaml up -d
 
-env-down:
+down:
 	docker compose -f deployments/docker-compose.yaml down
 
 build:
@@ -88,4 +88,4 @@ generate:
 load-tests:
 	k6 run load_tests/crud.js
 
-.PHONY: build run run-api run-scheduler run-sender run-all build-img run-img version test api-test lint migration generate load-tests
+.PHONY: build run run-api run-scheduler run-sender run-all build-img run-img version test api-test lint migration generate load-tests up down
