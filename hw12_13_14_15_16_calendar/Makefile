@@ -25,7 +25,9 @@ env-down:
 	docker compose down
 
 build:
-	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o ./bin/calendar -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o ./bin/calendar_scheduler -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
+	go build -v -o ./bin/calendar_sender -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
 
 run: build
 	$(BIN) -config ./configs/config.yaml
