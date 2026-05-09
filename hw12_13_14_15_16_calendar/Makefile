@@ -18,23 +18,11 @@ RABBIT_PORT ?= 5672
 RABBIT_PORT_UI ?= 15672
 RABBIT_CONTAINER := rabbitmq
 
+env-up:
+	docker compose up -d
 
-run-postgres:
-	docker run -d --name $(POSTGRES_CONTAINER) \
-	-e POSTGRES_USER=$(POSTGRES_USER) \
-	-e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
-	-e POSTGRES_DB=$(POSTGRES_DB) \
-	-p $(POSTGRES_PORT):5432 \
-	-v postgres-data-calendar:/var/lib/postgresql/data \
-	postgres:17
-
-run-rabbit:
-	docker run -d --name $(RABBIT_CONTAINER) \
-	-p $(RABBIT_PORT):5672 \
-	-p $(RABBIT_PORT_UI):15672 \
-	-e RABBITMQ_DEFAULT_USER=$(RABBIT_USER) \
-	-e RABBITMQ_DEFAULT_PASS=$(RABBIT_PASSWORD) \
-	rabbitmq:management
+env-down:
+	docker compose down
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
