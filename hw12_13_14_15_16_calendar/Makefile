@@ -21,7 +21,7 @@ RABBIT_PORT_UI ?= 15672
 RABBIT_CONTAINER := rabbitmq
 
 up:
-	docker compose -f deployments/docker-compose.yaml up -d
+	docker compose -f deployments/docker-compose.yaml up -d --build
 
 down:
 	docker compose -f deployments/docker-compose.yaml down
