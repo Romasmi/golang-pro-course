@@ -43,7 +43,12 @@ run-scheduler: build
 run-sender: build
 	$(BIN_SENDER) -config ./configs/sender_config.yaml
 
-run-all: build run-api run-scheduler run-sender
+run-all: build
+	trap 'kill 0' SIGINT SIGTERM EXIT; \
+	$(MAKE) run-api & \
+	$(MAKE) run-scheduler & \
+	$(MAKE) run-sender & \
+	wait
 
 build-img:
 	docker build \
