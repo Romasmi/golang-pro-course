@@ -104,7 +104,11 @@ func (r *RabbitMQ) Receive(ctx context.Context) (<-chan queue.Notification, erro
 					r.logger.Error(fmt.Sprintf("failed to unmarshal notification: %v, body: %s", err, string(d.Body)))
 					continue
 				}
-				notifications <- n
+				select {
+				case notifications <- n:
+				case <-ctx.Done():
+					return
+				}
 			}
 		}
 	}()

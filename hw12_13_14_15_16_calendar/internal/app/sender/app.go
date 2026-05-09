@@ -53,9 +53,15 @@ func (a *App) Run(ctx context.Context) error {
 				a.logger.Info("Notifications channel closed")
 				return nil
 			}
-			time.Sleep(time.Duration(
+			timer := time.NewTimer(time.Duration(
 				r.Intn(1900)+100,
 			) * time.Millisecond)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return nil
+			case <-timer.C:
+			}
 			a.logger.Info(fmt.Sprintf("SENDER: Sending notification for event %s (user %s): %s",
 				n.EventID, n.UserID, n.Title))
 		}

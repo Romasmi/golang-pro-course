@@ -61,33 +61,41 @@ func (a *App) Init(ctx context.Context) error {
 }
 
 func (a *App) Run(ctx context.Context) error {
+	errCh := make(chan error, 2)
+
 	go func() {
 		if err := a.grpcServer.Start(a.config.GRPC.Host, a.config.GRPC.Port); err != nil {
-			a.logger.Error("failed to start grpc server: " + err.Error())
+			errCh <- fmt.Errorf("grpc server: %w", err)
 		}
 	}()
 
 	go func() {
-		<-ctx.Done()
-		a.logger.Info("Stopping servers...")
-		stopCtx, stopCancel := context.WithTimeout(context.Background(), time.Second*3)
-		defer stopCancel()
-
-		if err := a.httpServer.Stop(stopCtx); err != nil {
-			a.logger.Error("failed to stop http server: " + err.Error())
-		}
-		a.grpcServer.Stop()
-
-		if closer, ok := a.storage.(interface{ Close(context.Context) error }); ok {
-			if err := closer.Close(stopCtx); err != nil {
-				a.logger.Error("failed to close storage: " + err.Error())
-			}
+		if err := a.httpServer.Start(ctx); err != nil {
+			errCh <- fmt.Errorf("http server: %w", err)
 		}
 	}()
 
 	a.logger.Info("calendar is running...")
-	if err := a.httpServer.Start(ctx); err != nil {
-		return fmt.Errorf("failed to start http server: %w", err)
+
+	select {
+	case <-ctx.Done():
+		a.logger.Info("Stopping servers...")
+	case err := <-errCh:
+		a.logger.Error("Server error: " + err.Error())
+	}
+
+	stopCtx, stopCancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer stopCancel()
+
+	if err := a.httpServer.Stop(stopCtx); err != nil {
+		a.logger.Error("failed to stop http server: " + err.Error())
+	}
+	a.grpcServer.Stop()
+
+	if closer, ok := a.storage.(interface{ Close(context.Context) error }); ok {
+		if err := closer.Close(stopCtx); err != nil {
+			a.logger.Error("failed to close storage: " + err.Error())
+		}
 	}
 
 	return nil

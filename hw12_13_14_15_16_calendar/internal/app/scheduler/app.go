@@ -93,6 +93,11 @@ func (a *App) scanEvents(ctx context.Context) {
 	}
 
 	for _, e := range events {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
 		n := queue.Notification{
 			EventID: e.ID,
 			Title:   e.Title,
