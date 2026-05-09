@@ -25,7 +25,7 @@ export default function () {
   const description = `Description ${Math.random().toString(36).substring(2, 15)}`;
 
   const now = new Date();
-  const startAt = new Date(now.getTime() + Math.floor(Math.random() * 1000000)).toISOString();
+  const startAt = new Date(now.getTime() - Math.floor(Math.random() * 1000000)).toISOString();
   const endAt = new Date(new Date(startAt).getTime() + 3600000).toISOString();
 
   const createPayload = JSON.stringify({
