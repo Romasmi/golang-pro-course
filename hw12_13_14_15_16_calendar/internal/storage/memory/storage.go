@@ -86,3 +86,44 @@ func (s *Storage) ListEventsWithFilter(_ context.Context, filter domain.EventFil
 	}
 	return res, nil
 }
+
+func (s *Storage) GetEventsToNotify(_ context.Context) ([]domain.Event, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	res := make([]domain.Event, 0)
+	now := time.Now()
+	for _, e := range s.events {
+		if !e.Notified && e.RemindBefore > 0 {
+			remindAt := e.StartAt.Add(-time.Duration(e.RemindBefore) * time.Second)
+			if remindAt.Before(now) || remindAt.Equal(now) {
+				res = append(res, e)
+			}
+		}
+	}
+	return res, nil
+}
+
+func (s *Storage) MarkEventNotified(_ context.Context, id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	e, ok := s.events[id]
+	if !ok {
+		return domain.ErrEventNotFound
+	}
+	e.Notified = true
+	s.events[id] = e
+	return nil
+}
+
+func (s *Storage) DeleteOldEvents(_ context.Context, olderThan time.Time) (int64, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var count int64
+	for id, e := range s.events {
+		if e.StartAt.Before(olderThan) {
+			delete(s.events, id)
+			count++
+		}
+	}
+	return count, nil
+}
