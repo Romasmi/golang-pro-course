@@ -1,7 +1,10 @@
 BIN := "./bin/calendar"
 BIN_SCHEDULER := "./bin/calendar_scheduler"
 BIN_SENDER := "./bin/calendar_sender"
-DOCKER_IMG="calendar:develop"
+DOCKER_IMG_CALENDAR := calendar:latest
+DOCKER_IMG_SCHEDULER := scheduler:latest
+DOCKER_IMG_SENDER := sender:latest
+K8S_NAMESPACE := calendar-app
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
@@ -53,11 +56,19 @@ run-all: build
 build-img:
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
-		-t $(DOCKER_IMG) \
-		-f build/Dockerfile .
+		-t $(DOCKER_IMG_CALENDAR) \
+		-f deployments/calendar.Dockerfile .
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(DOCKER_IMG_SCHEDULER) \
+		-f deployments/scheduler.Dockerfile .
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(DOCKER_IMG_SENDER) \
+		-f deployments/sender.Dockerfile .
 
 run-img: build-img
-	docker run $(DOCKER_IMG)
+	docker run $(DOCKER_IMG_CALENDAR)
 
 version: build
 	$(BIN) version
@@ -94,4 +105,34 @@ integration-tests:
 	docker compose -f deployments/docker-compose.integration.yaml down; \
 	exit $$RET
 
-.PHONY: build run run-api run-scheduler run-sender run-all build-img run-img version test api-test lint migration generate load-tests up down integration-tests
+k8s-install:
+	helm upgrade --install calendar deployments/calendar-chart --namespace $(K8S_NAMESPACE) --create-namespace
+
+k8s-uninstall:
+	helm uninstall calendar --namespace $(K8S_NAMESPACE)
+
+k8s-load-images: build-img
+	minikube image load $(DOCKER_IMG_CALENDAR) $(DOCKER_IMG_SCHEDULER) $(DOCKER_IMG_SENDER)
+
+k8s-forward-api:
+	kubectl port-forward -n $(K8S_NAMESPACE) svc/calendar-calendar-chart-calendar 8888:80
+
+k8s-forward-db:
+	kubectl port-forward -n $(K8S_NAMESPACE) svc/calendar-calendar-chart-postgres $(POSTGRES_PORT):5432
+
+k8s-status:
+	kubectl get pods -n $(K8S_NAMESPACE)
+
+k8s-logs-api:
+	kubectl logs -f -n $(K8S_NAMESPACE) -l app=calendar
+
+k8s-logs-scheduler:
+	kubectl logs -f -n $(K8S_NAMESPACE) -l app=scheduler
+
+k8s-logs-sender:
+	kubectl logs -f -n $(K8S_NAMESPACE) -l app=sender
+
+k8s-logs:
+	kubectl logs -f -n $(K8S_NAMESPACE) -l 'app in (calendar, scheduler, sender)' --all-containers=true --prefix
+
+.PHONY: build run run-api run-scheduler run-sender run-all build-img run-img version test api-test lint migration generate load-tests up down integration-tests k8s-install k8s-uninstall k8s-load-images k8s-forward-api k8s-forward-db k8s-status k8s-logs-api k8s-logs-scheduler k8s-logs-sender k8s-logs
