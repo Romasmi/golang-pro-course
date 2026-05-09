@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/logger"
-	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/internal/queue"
+	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/pkg/queue"
 	"github.com/stretchr/testify/require"
 )
 
