@@ -47,3 +47,19 @@ func (s *CalendarService) ListEvents(ctx context.Context) ([]domain.Event, error
 func (s *CalendarService) ListEventsByFilter(ctx context.Context, from, to time.Time) ([]domain.Event, error) {
 	return s.storage.ListEventsWithFilter(ctx, domain.EventFilter{From: from, To: to})
 }
+
+func (s *CalendarService) DeleteEvent(ctx context.Context, id string) error {
+	return s.storage.DeleteEvent(ctx, id)
+}
+
+func (s *CalendarService) GetEventsToNotify(ctx context.Context) ([]domain.Event, error) {
+	return s.storage.GetEventsToNotify(ctx)
+}
+
+func (s *CalendarService) MarkEventNotified(ctx context.Context, id string) error {
+	return s.storage.MarkEventNotified(ctx, id)
+}
+
+func (s *CalendarService) DeleteOldEvents(ctx context.Context, olderThan time.Time) (int64, error) {
+	return s.storage.DeleteOldEvents(ctx, olderThan)
+}

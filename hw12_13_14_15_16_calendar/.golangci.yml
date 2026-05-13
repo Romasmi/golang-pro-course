@@ -26,6 +26,7 @@ linters-settings:
           - google.golang.org/grpc
           - google.golang.org/protobuf
           - google.golang.org/genproto
+          - github.com/rabbitmq/amqp091-go
       Test:
         files:
           - $test
@@ -36,7 +37,9 @@ linters-settings:
           - github.com/grpc-ecosystem/grpc-gateway/v2/runtime
   tagliatelle:
     case:
-      yaml: snake
+      rules:
+        yaml: snake
+        json: snake
 issues:
   exclude-rules:
     - path: _test\.go

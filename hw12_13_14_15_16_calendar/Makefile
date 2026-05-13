@@ -1,4 +1,6 @@
 BIN := "./bin/calendar"
+BIN_SCHEDULER := "./bin/calendar_scheduler"
+BIN_SENDER := "./bin/calendar_sender"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -18,29 +20,35 @@ RABBIT_PORT ?= 5672
 RABBIT_PORT_UI ?= 15672
 RABBIT_CONTAINER := rabbitmq
 
+env-up:
+	docker compose up -d
 
-run-postgres:
-	docker run -d --name $(POSTGRES_CONTAINER) \
-	-e POSTGRES_USER=$(POSTGRES_USER) \
-	-e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
-	-e POSTGRES_DB=$(POSTGRES_DB) \
-	-p $(POSTGRES_PORT):5432 \
-	-v postgres-data-calendar:/var/lib/postgresql/data \
-	postgres:17
-
-run-rabbit:
-	docker run -d --name $(RABBIT_CONTAINER) \
-	-p $(RABBIT_PORT):5672 \
-	-p $(RABBIT_PORT_UI):15672 \
-	-e RABBITMQ_DEFAULT_USER=$(RABBIT_USER) \
-	-e RABBITMQ_DEFAULT_PASS=$(RABBIT_PASSWORD) \
-	rabbitmq:management
+env-down:
+	docker compose down
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(BIN_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
+	go build -v -o $(BIN_SENDER) -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
 
 run: build
 	$(BIN) -config ./configs/config.yaml
+
+run-api: build
+	$(BIN) -config ./configs/config.yaml
+
+run-scheduler: build
+	$(BIN_SCHEDULER) -config ./configs/scheduler_config.yaml
+
+run-sender: build
+	$(BIN_SENDER) -config ./configs/sender_config.yaml
+
+run-all: build
+	trap 'kill 0' SIGINT SIGTERM EXIT; \
+	$(MAKE) run-api & \
+	$(MAKE) run-scheduler & \
+	$(MAKE) run-sender & \
+	wait
 
 build-img:
 	docker build \
@@ -77,4 +85,7 @@ generate:
 		--openapiv2_out=pkg/api --openapiv2_opt=logtostderr=true \
 		api/EventService.proto
 
-.PHONY: build run build-img run-img version test api-test lint migration generate
+load-tests:
+	k6 run load_tests/crud.js
+
+.PHONY: build run run-api run-scheduler run-sender run-all build-img run-img version test api-test lint migration generate load-tests

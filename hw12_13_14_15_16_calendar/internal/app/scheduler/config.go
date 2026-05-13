@@ -1,17 +1,18 @@
-package main
+package scheduler
 
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Logger  LoggerConf  `yaml:"logger"`
-	Storage StorageConf `yaml:"storage"`
-	HTTP    HTTPConf    `yaml:"http"`
-	GRPC    GRPCConf    `yaml:"grpc"`
+	Logger    LoggerConf   `yaml:"logger"`
+	Storage   StorageConf  `yaml:"storage"`
+	RabbitMQ  RabbitMQConf `yaml:"rabbitmq"`
+	Scheduler Conf         `yaml:"scheduler"`
 }
 
 type LoggerConf struct {
@@ -21,17 +22,17 @@ type LoggerConf struct {
 type StorageConf struct {
 	Type          string `yaml:"type"`
 	DSN           string `yaml:"dsn"`
-	MigrationsDir string `yaml:"migrationsDir"`
+	MigrationsDir string `yaml:"migrations_dir"`
 }
 
-type HTTPConf struct {
-	Host string `yaml:"host"`
-	Port string `yaml:"port"`
+type RabbitMQConf struct {
+	URL   string `yaml:"url"`
+	Queue string `yaml:"queue"`
 }
 
-type GRPCConf struct {
-	Host string `yaml:"host"`
-	Port string `yaml:"port"`
+type Conf struct {
+	ScanInterval  time.Duration `yaml:"scan_interval"`
+	CleanInterval time.Duration `yaml:"clean_interval"`
 }
 
 func NewConfig(path string) (Config, error) {

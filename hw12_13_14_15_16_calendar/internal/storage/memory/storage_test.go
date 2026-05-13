@@ -135,6 +135,38 @@ func TestStorage(t *testing.T) {
 		err = s.DeleteEvent(ctx, "1")
 		require.ErrorIs(t, err, domain.ErrEventNotFound)
 	})
+
+	t.Run("notify and clean", func(t *testing.T) {
+		s := New()
+		now := time.Now()
+
+		// Should notify (StartAt <= now)
+		_ = s.AddEvent(ctx, domain.Event{ID: "n1", StartAt: now.Add(-5 * time.Second)})
+		// Should not notify (StartAt > now)
+		_ = s.AddEvent(ctx, domain.Event{ID: "n2", StartAt: now.Add(20 * time.Second)})
+		// Already notified
+		_ = s.AddEvent(ctx, domain.Event{ID: "n3", StartAt: now.Add(-5 * time.Second), Notified: true})
+
+		toNotify, err := s.GetEventsToNotify(ctx)
+		require.NoError(t, err)
+		require.Len(t, toNotify, 1)
+		require.Equal(t, "n1", toNotify[0].ID)
+
+		err = s.MarkEventNotified(ctx, "n1")
+		require.NoError(t, err)
+
+		toNotify, _ = s.GetEventsToNotify(ctx)
+		require.Len(t, toNotify, 0)
+
+		// Clean old
+		_ = s.AddEvent(ctx, domain.Event{ID: "old", StartAt: now.AddDate(-2, 0, 0)})
+		count, err := s.DeleteOldEvents(ctx, now.AddDate(-1, 0, 0))
+		require.NoError(t, err)
+		require.Equal(t, int64(1), count)
+
+		_, err = s.GetEventByID(ctx, "old")
+		require.ErrorIs(t, err, domain.ErrEventNotFound)
+	})
 }
 
 func TestStorageConcurrency(t *testing.T) {
