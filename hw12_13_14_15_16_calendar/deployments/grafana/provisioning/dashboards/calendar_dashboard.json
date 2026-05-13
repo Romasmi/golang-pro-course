@@ -70,7 +70,7 @@
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
       "targets": [
-        { "expr": "sum(rate(container_cpu_usage_seconds_total{container=~\".*postgres.*\",container!~\"POD|.*exporter.*\"}[1m])) or sum(rate(container_cpu_usage_seconds_total{name=~\".*postgres.*\",container!~\"POD|.*exporter.*\"}[1m])) or sum(rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service=~\".*postgres.*\",container_label_com_docker_compose_service!~\".*exporter.*\"}[1m]))", "legendFormat": "Postgres CPU" }
+        { "expr": "sum(rate(container_cpu_usage_seconds_total{id!=\"/\", container=~\".*postgres.*\", container!~\"POD|.*exporter.*\"}[1m])) or sum(rate(container_cpu_usage_seconds_total{id!=\"/\", name=~\".*postgres.*\", name!~\"POD|.*exporter.*\"}[1m])) or sum(rate(container_cpu_usage_seconds_total{id!=\"/\", container_label_com_docker_compose_service=~\".*postgres.*\", container_label_com_docker_compose_service!~\"POD|.*exporter.*\"}[1m]))", "legendFormat": "Postgres CPU" }
       ]
     }
   ],
