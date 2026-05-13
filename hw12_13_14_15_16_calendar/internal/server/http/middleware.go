@@ -57,11 +57,9 @@ func normalizePath(path string) string {
 
 	if parts[1] == "events" {
 		if len(parts) == 3 {
-			// /events/{id}
 			return "/events/{id}"
 		}
 		if len(parts) == 4 && parts[2] == "interval" {
-			// /events/interval/{interval}
 			return "/events/interval/{interval}"
 		}
 	}
