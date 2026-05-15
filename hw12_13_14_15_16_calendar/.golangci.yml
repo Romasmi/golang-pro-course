@@ -27,6 +27,7 @@ linters-settings:
           - google.golang.org/protobuf
           - google.golang.org/genproto
           - github.com/rabbitmq/amqp091-go
+          - github.com/prometheus/client_golang
       Test:
         files:
           - $test

@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "calendar-chart.fullname" . }}-postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9187"
+    spec:
+      containers:
+        - name: postgres
+          image: "{{ .Values.images.postgres.repository }}:{{ .Values.images.postgres.tag }}"
+          imagePullPolicy: {{ .Values.images.postgres.pullPolicy }}
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.config.postgres.user | quote }}
+            - name: POSTGRES_PASSWORD
+              value: {{ .Values.config.postgres.password | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.config.postgres.db | quote }}
+          ports:
+            - containerPort: 5432
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.config.postgres.user | quote }}
+                - -d
+                - {{ .Values.config.postgres.db | quote }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.config.postgres.user | quote }}
+                - -d
+                - {{ .Values.config.postgres.db | quote }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+        - name: postgres-exporter
+          image: prometheuscommunity/postgres-exporter:v0.15.0
+          env:
+            - name: DATA_SOURCE_NAME
+              value: "postgresql://{{ .Values.config.postgres.user }}:{{ .Values.config.postgres.password }}@localhost:5432/{{ .Values.config.postgres.db }}?sslmode=disable"
+          ports:
+            - containerPort: 9187
+              name: metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "calendar-chart.fullname" . }}-postgres
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: postgres

@@ -36,3 +36,24 @@ func TestLoggingMiddleware(t *testing.T) {
 	require.Equal(t, "OK", rr.Body.String())
 	logger.AssertCalled(t, "Info", mock.Anything)
 }
+
+func TestNormalizePath(t *testing.T) {
+	tests := []struct {
+		path     string
+		expected string
+	}{
+		{"/events", "/events"},
+		{"/events/123", "/events/{id}"},
+		{"/events/uuid-abc", "/events/{id}"},
+		{"/events/interval/DAY", "/events/interval/{interval}"},
+		{"/hello", "/hello"},
+		{"/", "/"},
+		{"/metrics", "/metrics"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			require.Equal(t, tt.expected, normalizePath(tt.path))
+		})
+	}
+}

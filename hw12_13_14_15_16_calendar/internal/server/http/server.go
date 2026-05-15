@@ -10,6 +10,7 @@ import (
 
 	"github.com/Romasmi/golang-pro-course/hw12_13_14_15_calendar/pkg/api"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -39,12 +40,16 @@ func NewServer(logger Logger, grpcAddr string, host, port string) *Server {
 	}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	mux.Handle("/", gwmux)
 	mux.HandleFunc("GET /swagger", s.serveSwaggerUI)
 	mux.HandleFunc("GET /swagger.json", s.serveSwaggerJSON)
 	mux.HandleFunc("GET /proto", s.serveProto)
+	mux.Handle("/metrics", promhttp.Handler())
 
-	handler := loggingMiddleware(logger, mux)
+	handler := metricsMiddleware(loggingMiddleware(logger, mux))
 
 	s.httpServer = &http.Server{
 		Addr:              fmt.Sprintf("%s:%s", host, port),
