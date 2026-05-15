@@ -1,12 +1,12 @@
 logger:
-  level: "info"
+  level: "${LOGGER_LEVEL}"
 storage:
   type: "sql"
-  dsn: "postgres://postgres:password@localhost:5435/backend?sslmode=disable"
+  dsn: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable"
   migrations_dir: "migrations"
 http:
-  host: "0.0.0.0"
-  port: "8080"
+  host: "${CALENDAR_HTTP_HOST}"
+  port: "${CALENDAR_HTTP_PORT}"
 grpc:
-  host: "0.0.0.0"
-  port: "50051"
+  host: "${CALENDAR_GRPC_HOST}"
+  port: "${CALENDAR_GRPC_PORT}"

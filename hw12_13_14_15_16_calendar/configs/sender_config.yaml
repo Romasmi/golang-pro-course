@@ -1,5 +1,5 @@
 logger:
-  level: "info"
+  level: "${LOGGER_LEVEL}"
 rabbitmq:
-  url: "amqp://rabbit:password@localhost:5672/"
+  url: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@${RABBITMQ_HOST}:${RABBITMQ_PORT}/"
   queue: "notifications"

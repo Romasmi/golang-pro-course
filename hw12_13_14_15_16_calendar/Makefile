@@ -20,11 +20,11 @@ RABBIT_PORT ?= 5672
 RABBIT_PORT_UI ?= 15672
 RABBIT_CONTAINER := rabbitmq
 
-env-up:
-	docker compose up -d
+up:
+	docker compose -f deployments/docker-compose.yaml up -d --build
 
-env-down:
-	docker compose down
+down:
+	docker compose -f deployments/docker-compose.yaml down
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
@@ -88,4 +88,10 @@ generate:
 load-tests:
 	k6 run load_tests/crud.js
 
-.PHONY: build run run-api run-scheduler run-sender run-all build-img run-img version test api-test lint migration generate load-tests
+integration-tests:
+	docker compose -f deployments/docker-compose.integration.yaml up --build --exit-code-from integration-tests; \
+	RET=$$?; \
+	docker compose -f deployments/docker-compose.integration.yaml down; \
+	exit $$RET
+
+.PHONY: build run run-api run-scheduler run-sender run-all build-img run-img version test api-test lint migration generate load-tests up down integration-tests
